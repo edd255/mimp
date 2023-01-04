@@ -1,6 +1,6 @@
-mod image;
-mod pixel;
-use image::image::Image;
+mod image_utils;
+mod pixel_utils;
+use image_utils::image::Image;
 
 use clap::Parser;
 
@@ -22,6 +22,9 @@ fn main() {
     let image = Image::read_file(args.filename);
     println!(
         "Type: {}\nWidth: {}\nHeight: {}\nPixels: {}",
-        image.magic_number, image.width, image.height, image.pixels.len()
+        image.magic_number,
+        image.width,
+        image.height,
+        image.pixels.len()
     );
 }
