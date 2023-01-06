@@ -81,5 +81,24 @@ pub mod image {
             }
             Some(pixels)
         }
+
+        fn brightness(&self) -> u32 {
+            let num: u32 = (self.width * self.height).try_into().unwrap();
+            let mut sum: u32 = 0;
+
+            for pixel in &self.pixels {
+                sum += ((pixel.red as u32) + (pixel.green as u32) + (pixel.blue as u32)) / 3;
+            }
+
+            sum / num
+        }
+
+        pub fn statistics(&self) {
+            println!("Type:       {}", self.magic_number);
+            println!("Height:     {}", self.height);
+            println!("Width:      {}", self.width);
+            println!("Pixels:     {}", self.pixels.len());
+            println!("Brightness: {}", self.brightness());
+        }
     }
 }
