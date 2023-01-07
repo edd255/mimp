@@ -168,9 +168,9 @@ pub mod image {
                     let r = pixel.red;
                     let g = pixel.green;
                     let b = pixel.blue;
-                    writeln!(file, "{} {} {}", r, g, b).expect("Could not write pixel");
+                    write!(file, "{} {} {} ", r, g, b).expect("Could not write pixel");
                 }
-                writeln!(file, "\n").expect("Could not write newline!");
+                writeln!(file).expect("Could not write newline!");
             }
         }
 
