@@ -11,12 +11,22 @@ pub mod image {
     }
 
     impl Image {
+        //--- READING & WRITING ------------------------------------------------
+
         /**
+         * Returns an image struct parsed from the file.
+         *
          * Source:
          *   https://github.com/chris-paterson/PPM
+         *
+         * Parameters:
+         *   file (Path): Path to the file
+         *
+         * Returns:
+         *   Image: Image struct parsed from file
          */
-        pub fn read_file(filename: String) -> Image {
-            let contents = match fs::read_to_string(filename) {
+        pub fn read_file(file: String) -> Image {
+            let contents = match fs::read_to_string(file) {
                 Ok(str) => str,
                 Err(err) => panic!("{:?}", err),
             };
@@ -41,8 +51,16 @@ pub mod image {
         }
 
         /**
+         * Parse the header of a PPM image file.
+         *
          * Source:
          *   https://github.com/chris-paterson/PPM
+         *
+         * Parameters:
+         *   lines (&[&str]): The lines to parse
+         *
+         * Returns:
+         *   Option<(String, usize, usize, u8)>: Parse the magic number and the dimensions of the file.
          */
         fn parse_header(lines: &[&str]) -> Option<(String, usize, usize, u8)> {
             let magic_number = lines.first().unwrap();
@@ -60,8 +78,16 @@ pub mod image {
         }
 
         /**
+         * Parse the pixels of the PPM image file.
+         *
          * Source:
          *   https://github.com/chris-paterson/PPM
+         *
+         * Parameters:
+         *   lines (&[&str]): The lines to parse
+         *
+         * Returns:
+         *   Option<Vec<Pixel>>: Returns an Optional of a pixel matrix, saved as vector
          */
         fn parse_pixels(lines: &[&str]) -> Option<Vec<Pixel>> {
             let content: Vec<u8> = lines
@@ -82,6 +108,17 @@ pub mod image {
             Some(pixels)
         }
 
+        //--- IMAGE STATISTICS -------------------------------------------------
+
+        /**
+         * Returns the brightness of the pixels, defined as the sum of the color channels, divided by three.
+         *
+         * Parameters:
+         *   &self: Image to display the brightness from
+         *
+         * Returns:
+         *   u32: Brightness of the image.
+         */
         fn brightness(&self) -> u32 {
             let num: u32 = (self.width * self.height).try_into().unwrap();
             let mut sum: u32 = 0;
@@ -93,6 +130,12 @@ pub mod image {
             sum / num
         }
 
+        /**
+         * Print statistics from the image.
+         *
+         * Parameters:
+         *   &self: The image to display statistics from
+         */
         pub fn statistics(&self) {
             println!("Type:       {}", self.magic_number);
             println!("Height:     {}", self.height);
