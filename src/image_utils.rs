@@ -1,6 +1,7 @@
 pub mod image {
     use crate::pixel_utils::pixel::Pixel;
     use std::fs;
+    use std::io::Write;
 
     pub struct Image {
         pub width: usize,
@@ -11,6 +12,43 @@ pub mod image {
     }
 
     impl Image {
+        //--- UTILITIES --------------------------------------------------------
+
+        /**
+         * Helper function for matrix indexing of the pixel vector.
+         *
+         * Parameters:
+         *   x (usize): x coordinate
+         *   y (usize): y coordinate
+         *
+         * Returns:
+         *   Option<usize>: Optional vector index
+         */
+        #[inline]
+        pub fn index(&self, x: usize, y: usize) -> Option<usize> {
+            if x < self.width && y < self.height {
+                return Some(y * self.width + x);
+            }
+            None
+        }
+
+        /**
+         * Returns optional pixel given matrix coordinates.
+         *
+         * Parameters:
+         *   x (usize): x coordinate
+         *   y (usize): y coordinate
+         *
+         * Returns:
+         *   Option<&Pixel>: Optional pixel
+         */
+        pub fn get(&self, x: usize, y: usize) -> Option<&Pixel> {
+            match self.index(x, y) {
+                Some(index) => self.pixels.get(index),
+                None => None,
+            }
+        }
+
         //--- READING & WRITING ------------------------------------------------
 
         /**
@@ -106,6 +144,34 @@ pub mod image {
                 pixels.push(Pixel { red, green, blue });
             }
             Some(pixels)
+        }
+
+        /**
+         * Write an image to a file.
+         *
+         * Source:
+         *   https://github.com/chris-paterson/PPM
+         *
+         * Parameters:
+         *   filename (String): Path to the file
+         */
+        pub fn write_file(&self, filename: String) {
+            let mut file = fs::File::create(filename).expect("Could not write to file");
+            writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
+            writeln!(file, "{} {}", self.height, self.width)
+                .expect("Could not write height and width.");
+            writeln!(file, "{}", self.scale).expect("Could not write scale");
+
+            for y in 0..self.height {
+                for x in 0..self.width {
+                    let pixel = self.get(x, y).unwrap();
+                    let r = pixel.red;
+                    let g = pixel.green;
+                    let b = pixel.blue;
+                    writeln!(file, "{} {} {}", r, g, b).expect("Could not write pixel");
+                }
+                writeln!(file, "\n").expect("Could not write newline!");
+            }
         }
 
         //--- IMAGE STATISTICS -------------------------------------------------

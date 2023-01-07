@@ -3,7 +3,9 @@ mod pixel_utils;
 use image_utils::image::Image;
 use pixel_utils::pixel::Pixel;
 
+extern crate rand;
 use clap::{Parser, Subcommand};
+use rand::Rng;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about)]
@@ -65,4 +67,28 @@ fn main() {
     println!("Red:        {}", a.red);
     println!("Green:      {}", a.green);
     println!("Blue:       {}", a.blue);
+
+    let width: usize = 1000;
+    let height: usize = 1000;
+    let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
+
+    for j in 0..height {
+        for i in 0..width {
+            let red: u8 = rand::thread_rng().gen();
+            let green: u8 = rand::thread_rng().gen();
+            let blue: u8 = rand::thread_rng().gen();
+            let pixel: Pixel = Pixel { red, green, blue };
+            let idx = j * width + i;
+            pixels[idx] = pixel;
+        }
+    }
+
+    let image: Image = Image {
+        magic_number: "P3".to_string(),
+        width,
+        height,
+        scale: 255,
+        pixels,
+    };
+    image.write_file("test.ppm".to_string());
 }
