@@ -72,14 +72,13 @@ fn main() {
     let height: usize = 1000;
     let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
 
-    for j in 0..height {
-        for i in 0..width {
+    for _ in 0..height {
+        for _ in 0..width {
             let red: u8 = rand::thread_rng().gen();
             let green: u8 = rand::thread_rng().gen();
             let blue: u8 = rand::thread_rng().gen();
             let pixel: Pixel = Pixel { red, green, blue };
-            let idx = j * width + i;
-            pixels[idx] = pixel;
+            pixels.push(pixel);
         }
     }
 
