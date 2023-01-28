@@ -2,11 +2,9 @@ use crate::image_utils::image::Image;
 use crate::pixel_utils::pixel::Pixel;
 use nalgebra::DMatrix;
 
-pub fn calculate_energy(
-    image: Image,
-    border: usize,
-) -> DMatrix<i16> {
-    let mut energy: DMatrix<i16> = DMatrix::from_element(image.pixels.nrows(), image.pixels.ncols(), 0);
+pub fn calculate_energy(image: Image, border: usize) -> DMatrix<i16> {
+    let mut energy: DMatrix<i16> =
+        DMatrix::from_element(image.pixels.nrows(), image.pixels.ncols(), 0);
 
     // Edge Case: First Element
     energy[(0, 0)] = 0;
@@ -34,7 +32,8 @@ pub fn calculate_energy(
             let left = image.pixels[(i, j - 1)];
             let above = image.pixels[(i - 1, j)];
 
-            energy[(i, j)] = Pixel::color_diff(&current, &left) + Pixel::color_diff(&left, &above);
+            energy[(i, j)] = Pixel::color_diff(&current, &left)
+                + Pixel::color_diff(&left, &above);
         }
     }
 
@@ -55,8 +54,8 @@ pub fn calculate_energy(
             above = image.pixels[(i - 1, j)];
             right = image.pixels[(i - 1, j + 1)];
 
-            energy[(i, j)] =
-                energy[(i - 1, j)].min(energy[(i - 1, j - 1)].min(energy[(i - 1, j + 1)]));
+            energy[(i, j)] = energy[(i - 1, j)]
+                .min(energy[(i - 1, j - 1)].min(energy[(i - 1, j + 1)]));
         }
 
         // Edge Case: Right Border
@@ -64,7 +63,8 @@ pub fn calculate_energy(
         above = image.pixels[(i - 1, border - 1)];
         left = image.pixels[(i - 1, border - 2)];
 
-        energy[(i, border - 1)] += energy[(i - 1, border - 2)].min(energy[(i - 1, border - 1)]);
+        energy[(i, border - 1)] +=
+            energy[(i - 1, border - 2)].min(energy[(i - 1, border - 1)]);
     }
 
     energy

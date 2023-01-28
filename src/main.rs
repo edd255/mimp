@@ -1,6 +1,6 @@
+mod energy_utils;
 mod image_utils;
 mod pixel_utils;
-mod energy_utils;
 use image_utils::image::Image;
 use nalgebra::DMatrix;
 use pixel_utils::pixel::Pixel;
