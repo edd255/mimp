@@ -1,54 +1,16 @@
 pub mod image {
     use crate::pixel_utils::pixel::Pixel;
+    use nalgebra::DMatrix;
     use std::fs;
     use std::io::Write;
 
     pub struct Image {
-        pub width: usize,
-        pub height: usize,
         pub magic_number: String,
         pub scale: u8,
-        pub pixels: Vec<Pixel>,
+        pub pixels: DMatrix<Pixel>,
     }
 
     impl Image {
-        //--- UTILITIES --------------------------------------------------------
-
-        /**
-         * Helper function for matrix indexing of the pixel vector.
-         *
-         * Parameters:
-         *   x (usize): x coordinate
-         *   y (usize): y coordinate
-         *
-         * Returns:
-         *   Option<usize>: Optional vector index
-         */
-        #[inline]
-        fn index(&self, x: usize, y: usize, width: usize) -> Option<usize> {
-            if x < self.width && y < self.height {
-                return Some(y * width + x);
-            }
-            None
-        }
-
-        /**
-         * Returns optional pixel given matrix coordinates.
-         *
-         * Parameters:
-         *   x (usize): x coordinate
-         *   y (usize): y coordinate
-         *
-         * Returns:
-         *   Option<&Pixel>: Optional pixel
-         */
-        pub fn get(&self, x: usize, y: usize) -> Option<&Pixel> {
-            match self.index(x, y, self.width) {
-                Some(index) => self.pixels.get(index),
-                None => None,
-            }
-        }
-
         //--- READING & WRITING ------------------------------------------------
 
         /**
@@ -76,13 +38,12 @@ pub mod image {
                     Some((m, w, h, s)) => (m, w, h, s),
                     None => panic!("Error in parsing the header"),
                 };
-            let pixels: Vec<Pixel> = match Self::parse_pixels(&body) {
-                Some(pixels) => pixels,
-                None => panic!("Error in parsing the pixels."),
-            };
+            let pixels: DMatrix<Pixel> =
+                match Self::parse_pixels(&body, width, height) {
+                    Some(pixels) => pixels,
+                    None => panic!("Error in parsing the pixels."),
+                };
             Image {
-                width,
-                height,
                 magic_number,
                 scale,
                 pixels,
@@ -128,7 +89,11 @@ pub mod image {
          * Returns:
          *   Option<Vec<Pixel>>: Returns an Optional of a pixel matrix, saved as vector
          */
-        fn parse_pixels(lines: &[&str]) -> Option<Vec<Pixel>> {
+        fn parse_pixels(
+            lines: &[&str],
+            width: usize,
+            height: usize,
+        ) -> Option<DMatrix<Pixel>> {
             let content: Vec<u8> = lines
                 .join(" ")
                 .replace('\n', "")
@@ -137,14 +102,14 @@ pub mod image {
                 .split(' ')
                 .map(|x| x.parse::<u8>().unwrap())
                 .collect();
-            let mut pixels = Vec::new();
+            let mut pixels: Vec<Pixel> = Vec::new();
             for i in (0..content.len()).step_by(3) {
                 let red = content[i];
                 let green = content[i + 1];
                 let blue = content[i + 2];
                 pixels.push(Pixel { red, green, blue });
             }
-            Some(pixels)
+            Some(DMatrix::from_vec(height, width, pixels))
         }
 
         /**
@@ -161,20 +126,20 @@ pub mod image {
                 fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number)
                 .expect("Could not write magic number.");
-            writeln!(file, "{} {}", self.height, self.width)
+            writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
 
-            for y in 0..self.height {
-                for x in 0..self.width {
-                    let pixel = self.get(x, y).unwrap();
-                    let r = pixel.red;
-                    let g = pixel.green;
-                    let b = pixel.blue;
-                    write!(file, "{r} {g} {b} ")
+            for y in 0..self.pixels.nrows() {
+                for x in 0..self.pixels.ncols() {
+                    let pixel = &self.pixels[(x, y)];
+                    let red = pixel.red;
+                    let green = pixel.green;
+                    let blue = pixel.blue;
+                    write!(file, "{red} {green} {blue}")
                         .expect("Could not write pixel");
                 }
-                writeln!(file).expect("Could not write newline!");
+                writeln!(file).expect("Could not write newline");
             }
         }
 
@@ -190,13 +155,15 @@ pub mod image {
          *   u32: Brightness of the image.
          */
         fn brightness(&self) -> u32 {
-            let size: u32 = (self.width * self.height).try_into().unwrap();
+            let size: u32 = (self.pixels.nrows() * self.pixels.ncols())
+                .try_into()
+                .unwrap();
             let mut sum: u32 = 0;
 
             for pixel in &self.pixels {
-                sum += ((u32::from(pixel.red))
-                    + (u32::from(pixel.green))
-                    + (u32::from(pixel.blue)))
+                sum += (u32::from(pixel.red)
+                    + u32::from(pixel.green)
+                    + u32::from(pixel.blue))
                     / 3;
             }
 
@@ -211,83 +178,11 @@ pub mod image {
          */
         pub fn statistics(&self) {
             println!("Type:       {}", self.magic_number);
-            println!("Height:     {}", self.height);
-            println!("Width:      {}", self.width);
-            println!("Pixels:     {}", self.pixels.len());
+            println!("Height:     {}", self.pixels.nrows());
+            println!("Width:      {}", self.pixels.ncols());
             println!("Brightness: {}", self.brightness());
         }
 
         //--- SEAM CARVING -----------------------------------------------------
-
-        pub fn calculate_energy(
-            &self,
-            mut energy: Vec<i16>,
-            border: usize,
-        ) -> Vec<i16> {
-            // Edge Case: First Element
-            energy[0] = 0;
-
-            // Edge Case: First Row
-            for j in 1..border {
-                let current = self.index(0, j, self.width).unwrap();
-                let left = self.index(0, j - 1, self.width).unwrap();
-
-                energy[current] =
-                    self.pixels[current].color_diff(&self.pixels[left]);
-            }
-
-            // Edge Case: Left Border
-            for i in 1..self.height {
-                let current = self.index(i, 0, self.width).unwrap();
-                let above = self.index(i - 1, 0, self.width).unwrap();
-
-                energy[current] =
-                    self.pixels[current].color_diff(&self.pixels[above]);
-            }
-
-            // No Edge Cases
-            for i in 1..self.height {
-                for j in 1..border {
-                    let current = self.index(i, j, self.width).unwrap();
-                    let left = self.index(i, j - 1, self.width).unwrap();
-                    let above = self.index(i - 1, j, self.width).unwrap();
-
-                    energy[current] = self.pixels[current]
-                        .color_diff(&self.pixels[left])
-                        + self.pixels[current].color_diff(&self.pixels[above]);
-                }
-            }
-
-            // First Row remains unchanged (no upper neighbors)
-            for i in 1..self.height {
-                let mut current = self.index(i, 0, self.width).unwrap();
-                let mut above = self.index(i - 1, 0, self.width).unwrap();
-                let mut right = self.index(i - 1, 1, self.width).unwrap();
-                let mut left;
-
-                // Edge Case: Left Border
-                energy[current] += energy[above].min(energy[right]);
-
-                // No Edge Cases
-                for j in 1..border - 1 {
-                    current = self.index(i, j, self.width).unwrap();
-                    left = self.index(i - 1, j - 1, self.width).unwrap();
-                    above = self.index(i - 1, j, self.width).unwrap();
-                    right = self.index(i - 1, j + 1, self.width).unwrap();
-
-                    energy[current] =
-                        energy[above].min(energy[left].min(energy[right]));
-                }
-
-                // Edge Case: Right Border
-                current = self.index(i, border - 1, self.width).unwrap();
-                above = self.index(i - 1, border - 1, self.width).unwrap();
-                left = self.index(i - 1, border - 2, self.width).unwrap();
-
-                energy[current] += energy[left].min(energy[above]);
-            }
-
-            energy
-        }
     }
 }
