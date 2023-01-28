@@ -9,3 +9,4 @@ edition = "2021"
 clap = { version = "4.0.32", features = ["derive"] }
 scan_fmt = "0.2.6"
 rand = "0.8.5"
+nalgebra = "*"
