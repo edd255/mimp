@@ -1,4 +1,5 @@
 pub mod pixel {
+    #[derive(Copy, Clone, PartialEq, Debug)]
     pub struct Pixel {
         pub red: u8,
         pub green: u8,
@@ -6,11 +7,12 @@ pub mod pixel {
     }
 
     impl Pixel {
-        pub fn color_diff(&self, other: &Pixel) -> i16 {
-            let red_diff: i16 = i16::from(self.red) - i16::from(other.red);
+        pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> i16 {
+            let red_diff: i16 = i16::from(pixel1.red) - i16::from(pixel2.red);
             let green_diff: i16 =
-                i16::from(self.green) - i16::from(other.green);
-            let blue_diff: i16 = i16::from(self.blue) - i16::from(other.blue);
+                i16::from(pixel1.green) - i16::from(pixel2.green);
+            let blue_diff: i16 =
+                i16::from(pixel1.blue) - i16::from(pixel2.blue);
 
             Self::square(red_diff)
                 + Self::square(green_diff)
