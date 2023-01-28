@@ -1,6 +1,8 @@
 mod image_utils;
 mod pixel_utils;
+mod energy_utils;
 use image_utils::image::Image;
+use nalgebra::DMatrix;
 use pixel_utils::pixel::Pixel;
 
 extern crate rand;
@@ -24,6 +26,7 @@ enum Commands {
         iterations: i32,
     },
     Statistics {},
+    Random {},
 }
 
 fn main() {
@@ -37,9 +40,14 @@ fn main() {
             let image = Image::read_file(cli.filename);
             image.statistics();
         }
+        Some(Commands::Random {}) => {
+            generate_random_image();
+        }
         None => {}
     }
+}
 
+fn generate_random_image() {
     let width: usize = 1000;
     let height: usize = 1000;
     let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
@@ -56,10 +64,8 @@ fn main() {
 
     let image: Image = Image {
         magic_number: "P3".to_string(),
-        width,
-        height,
         scale: 255,
-        pixels,
+        pixels: DMatrix::from_vec(width, height, pixels),
     };
     image.write_file("test.ppm".to_string());
 }
