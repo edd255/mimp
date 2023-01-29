@@ -33,16 +33,14 @@ pub mod image {
             let lines: Vec<&str> = contents.split('\n').collect();
             let header: Vec<&str> = lines[0..3].to_vec();
             let body: Vec<&str> = lines[3..].to_vec();
-            let (magic_number, width, height, scale) =
-                match Self::parse_header(&header) {
-                    Some((m, w, h, s)) => (m, w, h, s),
-                    None => panic!("Error in parsing the header"),
-                };
-            let pixels: DMatrix<Pixel> =
-                match Self::parse_pixels(&body, width, height) {
-                    Some(pixels) => pixels,
-                    None => panic!("Error in parsing the pixels."),
-                };
+            let (magic_number, width, height, scale) = match Self::parse_header(&header) {
+                Some((m, w, h, s)) => (m, w, h, s),
+                None => panic!("Error in parsing the header"),
+            };
+            let pixels: DMatrix<Pixel> = match Self::parse_pixels(&body, width, height) {
+                Some(pixels) => pixels,
+                None => panic!("Error in parsing the pixels."),
+            };
             Image {
                 magic_number,
                 scale,
@@ -89,11 +87,7 @@ pub mod image {
          * Returns:
          *   Option<Vec<Pixel>>: Returns an Optional of a pixel matrix, saved as vector
          */
-        fn parse_pixels(
-            lines: &[&str],
-            width: usize,
-            height: usize,
-        ) -> Option<DMatrix<Pixel>> {
+        fn parse_pixels(lines: &[&str], width: usize, height: usize) -> Option<DMatrix<Pixel>> {
             let content: Vec<u8> = lines
                 .join(" ")
                 .replace('\n', "")
@@ -122,10 +116,8 @@ pub mod image {
          *   filename (String): Path to the file
          */
         pub fn write_file(&self, filename: String) {
-            let mut file =
-                fs::File::create(filename).expect("Could not write to file");
-            writeln!(file, "{}", self.magic_number)
-                .expect("Could not write magic number.");
+            let mut file = fs::File::create(filename).expect("Could not write to file");
+            writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
@@ -136,8 +128,7 @@ pub mod image {
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red} {green} {blue}")
-                        .expect("Could not write pixel");
+                    write!(file, "{red} {green} {blue}").expect("Could not write pixel");
                 }
                 writeln!(file).expect("Could not write newline");
             }
@@ -161,10 +152,7 @@ pub mod image {
             let mut sum: u32 = 0;
 
             for pixel in &self.pixels {
-                sum += (u32::from(pixel.red)
-                    + u32::from(pixel.green)
-                    + u32::from(pixel.blue))
-                    / 3;
+                sum += (u32::from(pixel.red) + u32::from(pixel.green) + u32::from(pixel.blue)) / 3;
             }
 
             sum / size
