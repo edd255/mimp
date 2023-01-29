@@ -37,7 +37,7 @@ fn main() {
             println!("Iterations: {}", *iterations);
         }
         Some(Commands::Statistics {}) => {
-            let image = Image::read_file(cli.filename);
+            let image = Image::read(cli.filename);
             image.statistics();
         }
         Some(Commands::Random {}) => {
@@ -67,5 +67,5 @@ fn generate_random_image() {
         scale: 255,
         pixels: DMatrix::from_vec(width, height, pixels),
     };
-    image.write_file("test.ppm".to_string());
+    image.write("test.ppm".to_string());
 }
