@@ -78,7 +78,11 @@ pub mod energy {
         column
     }
 
-    pub fn calculate_optimal_path(energy: &DMatrix<i16>, border: usize, start: usize) -> Vec<usize> {
+    pub fn calculate_optimal_path(
+        energy: &DMatrix<i16>,
+        border: usize,
+        start: usize,
+    ) -> Vec<usize> {
         let mut seam = Vec::with_capacity(energy.nrows());
         seam[energy.nrows() - 1] = start;
         for j in energy.nrows()..0 {

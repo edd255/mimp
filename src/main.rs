@@ -31,7 +31,7 @@ enum Commands {
     Statistics {},
     Random {},
     Rotate {},
-    Invert {}
+    Invert {},
 }
 
 fn main() {

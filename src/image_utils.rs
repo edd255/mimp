@@ -1,6 +1,6 @@
 pub mod image {
-    use crate::pixel_utils::pixel::Pixel;
     use crate::energy_utils::energy;
+    use crate::pixel_utils::pixel::Pixel;
     use nalgebra::DMatrix;
     use std::fs;
     use std::io::Write;
