@@ -7,7 +7,7 @@ pub mod pixel {
     }
 
     impl Pixel {
-        pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> i16 {
+        pub fn color_diff(pixel1: Pixel, pixel2: Pixel) -> i16 {
             let red_diff: i16 = i16::from(pixel1.red) - i16::from(pixel2.red);
             let green_diff: i16 = i16::from(pixel1.green) - i16::from(pixel2.green);
             let blue_diff: i16 = i16::from(pixel1.blue) - i16::from(pixel2.blue);
