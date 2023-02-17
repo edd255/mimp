@@ -1,5 +1,6 @@
 pub mod image {
     use crate::pixel_utils::pixel::Pixel;
+    use crate::energy_utils::energy;
     use nalgebra::DMatrix;
     use std::fs;
     use std::io::Write;
@@ -11,13 +12,13 @@ pub mod image {
     }
 
     impl Image {
-        //--- READING & WRITING -------------------------------------------------------------------
+        //=== READING & WRITING ===================================================================
 
         ///
         /// Returns an image struct parsed from the file.
         ///
         /// Source:
-        ///   https://github.com/chris-paterson/PPM
+        ///   <https://github.com/chris-paterson/PPM>
         ///
         /// Parameters:
         ///   file (Path): Path to the file
@@ -52,7 +53,7 @@ pub mod image {
         /// Parse the header of a PPM image file.
         ///
         /// Source:
-        ///   https://github.com/chris-paterson/PPM
+        ///   <https://github.com/chris-paterson/PPM>
         ///
         /// Parameters:
         ///   lines (&[&str]): The lines to parse
@@ -80,7 +81,7 @@ pub mod image {
         /// Parse the pixels of the PPM image file.
         ///
         /// Source:
-        ///   https://github.com/chris-paterson/PPM
+        ///   <https://github.com/chris-paterson/PPM>
         ///
         /// Parameters:
         ///   lines (&[&str]): The lines to parse
@@ -111,7 +112,7 @@ pub mod image {
         /// Write an image to a file.
         ///
         /// Source:
-        ///   https://github.com/chris-paterson/PPM
+        ///   <https://github.com/chris-paterson/PPM>
         ///
         /// Parameters:
         ///   filename (String): Path to the file
@@ -135,7 +136,7 @@ pub mod image {
             }
         }
 
-        //--- IMAGE STATISTICS --------------------------------------------------------------------
+        //=== IMAGE STATISTICS ====================================================================
 
         ///
         /// Returns the brightness of the pixels, defined as the sum of the color channels, divided
@@ -173,11 +174,23 @@ pub mod image {
             println!("Brightness: {}", self.brightness());
         }
 
-        //--- SEAM CARVING ------------------------------------------------------------------------
+        //=== SEAM CARVING ========================================================================
 
-        pub fn carve_path(&self, border: i32, seam: Vec<i32>) {
+        pub fn seam_carve(&mut self, iterations: usize, output: String) {
+            let mut border = self.pixels.ncols();
+            for _ in 0..iterations {
+                let energy_matrix = energy::calculate_energy(self, border);
+                let x = energy::calculate_min_energy_column(&energy_matrix, border);
+                let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
+                self.carve_path(border, seam);
+                border -= 1;
+            }
+            self.crop(output, border);
+        }
+
+        fn carve_path(&mut self, border: usize, seam: Vec<usize>) {
             for j in 0..self.pixels.nrows() {
-                let col = seam.get(j).unwrap();
+                let col = *seam.get(j).unwrap();
                 for i in col..border - 1 {
                     self.pixels[(j, i)].red = self.pixels[(j, i + 1)].red;
                     self.pixels[(j, i)].green = self.pixels[(j, i + 1)].green;
@@ -186,7 +199,7 @@ pub mod image {
             }
         }
 
-        //--- IMAGE MANIPULATION ------------------------------------------------------------------
+        //=== IMAGE MANIPULATION ==================================================================
 
         ///
         /// Crop an image.
@@ -233,6 +246,26 @@ pub mod image {
                     let green = pixel.green;
                     let blue = pixel.blue;
                     write!(file, "{red} {green} {blue}").expect("Could not write pixel");
+                }
+                writeln!(file).expect("Could not write newline");
+            }
+        }
+
+        pub fn invert(&mut self, filename: String) {
+            let mut file = fs::File::create(filename).expect("Could not write to file");
+            writeln!(file, "{}", self.magic_number).expect("Could not write magic number");
+            writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
+                .expect("Could not write height and width.");
+            writeln!(file, "{}", self.scale).expect("Could not write scale");
+
+            for y in 0..self.pixels.nrows() {
+                for x in 0..self.pixels.ncols() {
+                    let pixel = &mut self.pixels[(x, y)];
+                    pixel.invert();
+                    let red = pixel.red;
+                    let green = pixel.green;
+                    let blue = pixel.blue;
+                    write!(file, "{red}, {green} {blue}").expect("Could not write pixel");
                 }
                 writeln!(file).expect("Could not write newline");
             }

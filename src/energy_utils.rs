@@ -3,7 +3,7 @@ pub mod energy {
     use crate::pixel_utils::pixel::Pixel;
     use nalgebra::DMatrix;
 
-    pub fn calculate_energy(image: Image, border: usize) -> DMatrix<i16> {
+    pub fn calculate_energy(image: &Image, border: usize) -> DMatrix<i16> {
         let mut energy: DMatrix<i16> =
             DMatrix::from_element(image.pixels.nrows(), image.pixels.ncols(), 0);
 
@@ -12,65 +12,63 @@ pub mod energy {
 
         // Edge Case: First Row
         for j in 1..border {
-            let current = image.pixels[(0, j)];
-            let left = image.pixels[(0, j - 1)];
-
-            energy[(0, j)] = Pixel::color_diff(&current, &left);
+            let current = (0, j);
+            let left = (0, j - 1);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left]);
         }
 
         // Edge Case: Left Border
         for i in 1..image.pixels.nrows() {
-            let current = image.pixels[(i, 0)];
-            let above = image.pixels[(i - 1, 0)];
+            let current = (i, 0);
+            let above = (i - 1, 0);
 
-            energy[(i, 0)] = Pixel::color_diff(&current, &above);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[above]);
         }
 
         // No Edge Cases
         for i in 1..image.pixels.nrows() {
             for j in 1..border {
-                let current = image.pixels[(i, j)];
-                let left = image.pixels[(i, j - 1)];
-                let above = image.pixels[(i - 1, j)];
+                let current = (i, j);
+                let left = (i, j - 1);
+                let above = (i - 1, j);
 
-                energy[(i, j)] =
-                    Pixel::color_diff(&current, &left) + Pixel::color_diff(&left, &above);
+                energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left])
+                    + Pixel::color_diff(image.pixels[left], image.pixels[above]);
             }
         }
 
         // First Row remains unchanged (no upper neighbors)
         for i in 1..image.pixels.nrows() {
-            let mut current = image.pixels[(i, 0)];
-            let mut above = image.pixels[(i - 1, 0)];
-            let mut right = image.pixels[(i - 1, 1)];
+            let mut current = (i, 0);
+            let mut above = (i - 1, 0);
+            let mut right = (i - 1, 1);
             let mut left;
 
             // Edge Case: Left Border
-            energy[(i, 0)] += energy[(i - 1, 0)].min(energy[(i - 1, 1)]);
+            energy[current] += energy[above].min(energy[right]);
 
             // No Edge Cases
             for j in 1..border - 1 {
-                current = image.pixels[(i, j)];
-                left = image.pixels[(i - 1, j - 1)];
-                above = image.pixels[(i - 1, j)];
-                right = image.pixels[(i - 1, j + 1)];
+                current = (i, j);
+                left = (i - 1, j - 1);
+                above = (i - 1, j);
+                right = (i - 1, j + 1);
 
-                energy[(i, j)] =
-                    energy[(i - 1, j)].min(energy[(i - 1, j - 1)].min(energy[(i - 1, j + 1)]));
+                energy[current] = energy[above].min(energy[left].min(energy[right]));
             }
 
             // Edge Case: Right Border
-            current = image.pixels[(i, border - 1)];
-            above = image.pixels[(i - 1, border - 1)];
-            left = image.pixels[(i - 1, border - 2)];
+            current = (i, border - 1);
+            above = (i - 1, border - 1);
+            left = (i - 1, border - 2);
 
-            energy[(i, border - 1)] += energy[(i - 1, border - 2)].min(energy[(i - 1, border - 1)]);
+            energy[current] += energy[left].min(energy[above]);
         }
 
         energy
     }
 
-    pub fn calculate_min_energy_column(energy: DMatrix<i16>, border: usize) -> usize {
+    pub fn calculate_min_energy_column(energy: &DMatrix<i16>, border: usize) -> usize {
         let mut column: usize = 0;
         for i in 1..border {
             if energy[(energy.nrows() - 1, column)] > energy[(energy.nrows() - 1, i)] {
@@ -78,5 +76,54 @@ pub mod energy {
             }
         }
         column
+    }
+
+    pub fn calculate_optimal_path(energy: &DMatrix<i16>, border: usize, start: usize) -> Vec<usize> {
+        let mut seam = Vec::with_capacity(energy.nrows());
+        seam[energy.nrows() - 1] = start;
+        for j in energy.nrows()..0 {
+            let left = (j - 1, seam[j] - 1);
+            let above = (j - 1, seam[j]);
+            let right = (j - 1, seam[j] + 1);
+
+            if seam[j] == 0 {
+                // Case: Left border
+
+                if energy[above] <= energy[right] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] + 1;
+                }
+            } else if seam[j] == border - 1 {
+                // Case: Right Border
+
+                if energy[above] <= energy[left] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] - 1;
+                }
+            } else if energy[above] == energy[left] {
+                // Precedence for multiple optimal pixels
+
+                if energy[above] <= energy[right] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] + 1;
+                }
+            } else if energy[above] <= energy[right] {
+                if energy[above] <= energy[left] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] - 1;
+                }
+            } else if energy[above] > energy[left] && energy[left] <= energy[right] {
+                seam[j - 1] = seam[j] - 1;
+            } else if energy[left] > energy[above] && energy[above] <= energy[right] {
+                seam[j - 1] = seam[j];
+            } else {
+                seam[j - 1] = seam[j] + 1;
+            }
+        }
+        seam
     }
 }
