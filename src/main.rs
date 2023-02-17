@@ -15,6 +15,9 @@ struct Cli {
     #[arg(short, long)]
     filename: String,
 
+    #[arg(short, long)]
+    output: String,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -23,31 +26,41 @@ struct Cli {
 enum Commands {
     SeamCarve {
         #[arg(short, long)]
-        iterations: i32,
+        iterations: usize,
     },
     Statistics {},
     Random {},
+    Rotate {},
+    Invert {}
 }
 
 fn main() {
     let cli = Cli::parse();
     match &cli.command {
         Some(Commands::SeamCarve { iterations }) => {
-            println!("Filename:   {}", cli.filename);
-            println!("Iterations: {}", *iterations);
+            let mut image = Image::read(cli.filename);
+            image.seam_carve(*iterations, cli.output);
         }
         Some(Commands::Statistics {}) => {
             let image = Image::read(cli.filename);
             image.statistics();
         }
         Some(Commands::Random {}) => {
-            generate_random_image();
+            generate_random_image(cli.output);
+        }
+        Some(Commands::Rotate {}) => {
+            let image = Image::read(cli.filename);
+            image.rotate(cli.output.to_string());
+        }
+        Some(Commands::Invert {}) => {
+            let mut image = Image::read(cli.filename);
+            image.invert(cli.output.to_string());
         }
         None => {}
     }
 }
 
-fn generate_random_image() {
+fn generate_random_image(output: String) {
     let width: usize = 1000;
     let height: usize = 1000;
     let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
@@ -67,5 +80,5 @@ fn generate_random_image() {
         scale: 255,
         pixels: DMatrix::from_vec(width, height, pixels),
     };
-    image.write("test.ppm".to_string());
+    image.write(output);
 }
