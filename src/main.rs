@@ -1,4 +1,15 @@
+///! This piece of software contains some basic functionality to manipulate images. It is meant as
+///! to study Rust for me.
+
+#[warn(missing_docs)]
+
+/// Seam Carving uses color differences of neighboring pixels as dispensability score. This
+/// difference is called energy. This crate contains methods to calculate the energy of an image
+/// and to find the optimal path according to this dispensability score.
 mod energy_utils;
+
+/// This crate contains the data structure that represents images as pixel matrices and
+/// functionalities as cropping, rotating, inverting and seam carving.
 mod image_utils;
 mod pixel_utils;
 use image_utils::image::Image;
@@ -60,11 +71,14 @@ fn main() {
     }
 }
 
+/// Write a random image to a file called `output`. This method will be replaced by proper testing.
+///
+/// # Parameters:
+///   * `output` - A path to the output file
 fn generate_random_image(output: String) {
     let width: usize = 1000;
     let height: usize = 1000;
     let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
-
     for _ in 0..height {
         for _ in 0..width {
             let red: u8 = rand::thread_rng().gen();
@@ -74,7 +88,6 @@ fn generate_random_image(output: String) {
             pixels.push(pixel);
         }
     }
-
     let image: Image = Image {
         magic_number: "P3".to_string(),
         scale: 255,

@@ -1,3 +1,6 @@
+/// This crate contains the data structure that represents images as pixel matrices and
+/// functionalities as cropping, rotating, inverting and seam carving.
+
 pub mod image {
     use crate::energy_utils::energy;
     use crate::pixel_utils::pixel::Pixel;
@@ -5,6 +8,9 @@ pub mod image {
     use std::fs;
     use std::io::Write;
 
+    /// Images in the PPM format have a `magic_number`, e.g. P3 for Portable Pixmaps (ASCII), and a
+    /// `scale` is the maximum value for each color. Images are represented as pixel matrices, here
+    /// in `pixels`.
     pub struct Image {
         pub magic_number: String,
         pub scale: u8,
@@ -14,18 +20,16 @@ pub mod image {
     impl Image {
         //=== READING & WRITING ===================================================================
 
+        /// Returns an image struct, parsed from a file
         ///
-        /// Returns an image struct parsed from the file.
+        /// # Source:
+        ///   * <https://github.com/chris-paterson/PPM>
         ///
-        /// Source:
-        ///   <https://github.com/chris-paterson/PPM>
+        /// # Parameters:
+        ///   `file` - The location of the file, as a String
         ///
-        /// Parameters:
-        ///   file (Path): Path to the file
-        ///
-        /// Returns:
-        ///   Image: Image struct parsed from file
-        ///
+        /// # Returns:
+        ///   `Image` - Representation of the image file with the struct Image
         pub fn read(file: String) -> Image {
             let contents = match fs::read_to_string(file) {
                 Ok(str) => str,
@@ -49,19 +53,16 @@ pub mod image {
             }
         }
 
-        ///
         /// Parse the header of a PPM image file.
         ///
-        /// Source:
-        ///   <https://github.com/chris-paterson/PPM>
+        /// # Source:
+        ///   * <https://github.com/chris-paterson/PPM>
         ///
-        /// Parameters:
-        ///   lines (&[&str]): The lines to parse
+        /// # Parameters:
+        ///   `lines` - The lines to parse
         ///
-        /// Returns:
-        ///   Option<(String, usize, usize, u8)>: Parse the magic number and the dimensions of the
-        ///   file.
-        ///
+        /// # Returns:
+        ///   `Option<(String, usize, usize, u8)>` - Parse the magic number and the dimensions of the file.
         fn parse_header(lines: &[&str]) -> Option<(String, usize, usize, u8)> {
             let magic_number = lines.first().unwrap();
             let dimensions: Vec<&str> = match lines.get(1) {
@@ -77,18 +78,16 @@ pub mod image {
             Some(((*magic_number).to_string(), width, height, scale))
         }
 
-        ///
         /// Parse the pixels of the PPM image file.
         ///
-        /// Source:
-        ///   <https://github.com/chris-paterson/PPM>
+        /// # Source:
+        ///   * <https://github.com/chris-paterson/PPM>
         ///
-        /// Parameters:
-        ///   lines (&[&str]): The lines to parse
+        /// # Parameters:
+        ///   lines - The lines to parse
         ///
-        /// Returns:
-        ///   Option<Vec<Pixel>>: Returns an Optional of a pixel matrix, saved as vector
-        ///
+        /// # Returns:
+        ///   `Option<Vec<Pixel>>`-  Returns an Optional of a pixel matrix, saved as vector
         fn parse_pixels(lines: &[&str], width: usize, height: usize) -> Option<DMatrix<Pixel>> {
             let content: Vec<u8> = lines
                 .join(" ")
@@ -108,15 +107,13 @@ pub mod image {
             Some(DMatrix::from_vec(height, width, pixels))
         }
 
-        ///
         /// Write an image to a file.
         ///
-        /// Source:
-        ///   <https://github.com/chris-paterson/PPM>
+        /// # Source:
+        ///   * <https://github.com/chris-paterson/PPM>
         ///
-        /// Parameters:
-        ///   filename (String): Path to the file
-        ///
+        /// # Parameters:
+        ///   `filename` - path to the file
         pub fn write(&self, filename: String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -138,16 +135,11 @@ pub mod image {
 
         //=== IMAGE STATISTICS ====================================================================
 
-        ///
         /// Returns the brightness of the pixels, defined as the sum of the color channels, divided
         /// by three.
         ///
-        /// Parameters:
-        ///   &self: Image to display the brightness from
-        ///
-        /// Returns:
-        ///   u32: Brightness of the image.
-        ///
+        /// # Returns:
+        ///   `u32`-  Brightness of the image
         fn brightness(&self) -> u32 {
             let size: u32 = (self.pixels.nrows() * self.pixels.ncols())
                 .try_into()
@@ -161,12 +153,7 @@ pub mod image {
             sum / size
         }
 
-        ///
         /// Print statistics from the image.
-        ///
-        /// Parameters:
-        ///   &self: The image to display statistics from
-        ///
         pub fn statistics(&self) {
             println!("Type:       {}", self.magic_number);
             println!("Height:     {}", self.pixels.nrows());
@@ -201,12 +188,10 @@ pub mod image {
 
         //=== IMAGE MANIPULATION ==================================================================
 
+        /// Crop an image
         ///
-        /// Crop an image.
-        ///
-        /// Parameters:
-        ///   filename (String): Path to the file
-        ///
+        /// # Parameters:
+        ///   `filename` - path to the file (as String)
         pub fn crop(&self, filename: String, border: usize) {
             assert!(border <= self.pixels.nrows());
             let mut file = fs::File::create(filename).expect("Could not write to file");
@@ -226,12 +211,10 @@ pub mod image {
             }
         }
 
-        ///
         /// Rotate an image.
         ///
         /// Parameters:
-        ///   filename (String): Path to the file
-        ///
+        ///   `filename` - Path to the file
         pub fn rotate(&self, filename: String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -251,6 +234,10 @@ pub mod image {
             }
         }
 
+        /// Rotate an image.
+        ///
+        /// # Parameters:
+        ///   `filename` - Path to the output file
         pub fn invert(&mut self, filename: String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number");
