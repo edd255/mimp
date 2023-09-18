@@ -18,29 +18,24 @@ pub mod energy {
         for j in 1..border {
             let current = (0, j);
             let left = (0, j - 1);
-            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left]);
+            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left]);
         }
-
         // Edge Case: Left Border
         for i in 1..image.pixels.nrows() {
             let current = (i, 0);
             let above = (i - 1, 0);
-
-            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[above]);
+            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[above]);
         }
-
         // No Edge Cases
         for i in 1..image.pixels.nrows() {
             for j in 1..border {
                 let current = (i, j);
                 let left = (i, j - 1);
                 let above = (i - 1, j);
-
-                energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left])
-                    + Pixel::color_diff(image.pixels[left], image.pixels[above]);
+                energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left])
+                    + Pixel::color_diff(&image.pixels[left], &image.pixels[above]);
             }
         }
-
         // First Row remains unchanged (no upper neighbors)
         for i in 1..image.pixels.nrows() {
             let mut current = (i, 0);
@@ -57,18 +52,14 @@ pub mod energy {
                 left = (i - 1, j - 1);
                 above = (i - 1, j);
                 right = (i - 1, j + 1);
-
                 energy[current] = energy[above].min(energy[left].min(energy[right]));
             }
-
             // Edge Case: Right Border
             current = (i, border - 1);
             above = (i - 1, border - 1);
             left = (i - 1, border - 2);
-
             energy[current] += energy[left].min(energy[above]);
         }
-
         energy
     }
 
@@ -93,10 +84,8 @@ pub mod energy {
             let left = (j - 1, seam[j] - 1);
             let above = (j - 1, seam[j]);
             let right = (j - 1, seam[j] + 1);
-
             if seam[j] == 0 {
                 // Case: Left border
-
                 if energy[above] <= energy[right] {
                     seam[j - 1] = seam[j];
                 } else {
@@ -104,7 +93,6 @@ pub mod energy {
                 }
             } else if seam[j] == border - 1 {
                 // Case: Right Border
-
                 if energy[above] <= energy[left] {
                     seam[j - 1] = seam[j];
                 } else {
@@ -112,7 +100,6 @@ pub mod energy {
                 }
             } else if energy[above] == energy[left] {
                 // Precedence for multiple optimal pixels
-
                 if energy[above] <= energy[right] {
                     seam[j - 1] = seam[j];
                 } else {

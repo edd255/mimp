@@ -30,7 +30,7 @@ pub mod image {
         ///
         /// # Returns:
         ///   `Image` - Representation of the image file with the struct Image
-        pub fn read(file: String) -> Image {
+        pub fn read(file: &String) -> Image {
             let contents = match fs::read_to_string(file) {
                 Ok(str) => str,
                 Err(err) => panic!("{err:?}"),
@@ -114,13 +114,12 @@ pub mod image {
         ///
         /// # Parameters:
         ///   `filename` - path to the file
-        pub fn write(&self, filename: String) {
+        pub fn write(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-
             for y in 0..self.pixels.nrows() {
                 for x in 0..self.pixels.ncols() {
                     let pixel = &self.pixels[(x, y)];
@@ -145,11 +144,9 @@ pub mod image {
                 .try_into()
                 .unwrap();
             let mut sum: u32 = 0;
-
             for pixel in &self.pixels {
                 sum += (u32::from(pixel.red) + u32::from(pixel.green) + u32::from(pixel.blue)) / 3;
             }
-
             sum / size
         }
 
@@ -163,19 +160,19 @@ pub mod image {
 
         //=== SEAM CARVING ========================================================================
 
-        pub fn seam_carve(&mut self, iterations: usize, output: String) {
+        pub fn seam_carve(&mut self, iterations: usize, output: &String) {
             let mut border = self.pixels.ncols();
             for _ in 0..iterations {
                 let energy_matrix = energy::calculate_energy(self, border);
                 let x = energy::calculate_min_energy_column(&energy_matrix, border);
                 let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
-                self.carve_path(border, seam);
+                self.carve_path(&border, &seam);
                 border -= 1;
             }
             self.crop(output, border);
         }
 
-        fn carve_path(&mut self, border: usize, seam: Vec<usize>) {
+        fn carve_path(&mut self, border: &usize, seam: &[usize]) {
             for j in 0..self.pixels.nrows() {
                 let col = *seam.get(j).unwrap();
                 for i in col..border - 1 {
@@ -192,7 +189,7 @@ pub mod image {
         ///
         /// # Parameters:
         ///   `filename` - path to the file (as String)
-        pub fn crop(&self, filename: String, border: usize) {
+        pub fn crop(&self, filename: &String, border: usize) {
             assert!(border <= self.pixels.nrows());
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -215,13 +212,12 @@ pub mod image {
         ///
         /// Parameters:
         ///   `filename` - Path to the file
-        pub fn rotate(&self, filename: String) {
+        pub fn rotate(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-
             for y in 0..self.pixels.nrows() {
                 for x in 0..self.pixels.ncols() {
                     let pixel = &self.pixels[(x, y)];
@@ -238,13 +234,12 @@ pub mod image {
         ///
         /// # Parameters:
         ///   `filename` - Path to the output file
-        pub fn invert(&mut self, filename: String) {
+        pub fn invert(&mut self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number");
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-
             for y in 0..self.pixels.nrows() {
                 for x in 0..self.pixels.ncols() {
                     let pixel = &mut self.pixels[(x, y)];

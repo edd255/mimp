@@ -1,5 +1,5 @@
-///! This piece of software contains some basic functionality to manipulate images. It is meant as
-///! to study Rust for me.
+//! This piece of software contains some basic functionality to manipulate images. It is meant as
+//! to study Rust for me.
 
 #[warn(missing_docs)]
 
@@ -49,23 +49,23 @@ fn main() {
     let cli = Cli::parse();
     match &cli.command {
         Some(Commands::SeamCarve { iterations }) => {
-            let mut image = Image::read(cli.filename);
-            image.seam_carve(*iterations, cli.output);
+            let mut image = Image::read(&cli.filename);
+            image.seam_carve(*iterations, &cli.output);
         }
         Some(Commands::Statistics {}) => {
-            let image = Image::read(cli.filename);
+            let image = Image::read(&cli.filename);
             image.statistics();
         }
         Some(Commands::Random {}) => {
-            generate_random_image(cli.output);
+            generate_random_image(&cli.output);
         }
         Some(Commands::Rotate {}) => {
-            let image = Image::read(cli.filename);
-            image.rotate(cli.output.to_string());
+            let image = Image::read(&cli.filename);
+            image.rotate(&cli.output.to_string());
         }
         Some(Commands::Invert {}) => {
-            let mut image = Image::read(cli.filename);
-            image.invert(cli.output.to_string());
+            let mut image = Image::read(&cli.filename);
+            image.invert(&cli.output.to_string());
         }
         None => {}
     }
@@ -75,7 +75,7 @@ fn main() {
 ///
 /// # Parameters:
 ///   * `output` - A path to the output file
-fn generate_random_image(output: String) {
+fn generate_random_image(output: &String) {
     let width: usize = 1000;
     let height: usize = 1000;
     let mut pixels: Vec<Pixel> = Vec::with_capacity(width * height);
