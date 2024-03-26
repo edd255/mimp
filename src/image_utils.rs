@@ -89,22 +89,29 @@ pub mod image {
         /// # Returns:
         ///   `Option<Vec<Pixel>>`-  Returns an Optional of a pixel matrix, saved as vector
         fn parse_pixels(lines: &[&str], width: usize, height: usize) -> Option<DMatrix<Pixel>> {
-            let content: Vec<u8> = lines
-                .join(" ")
-                .replace('\n', "")
-                .replace("  ", " ")
-                .trim_end()
-                .split(' ')
-                .map(|x| x.parse::<u8>().unwrap())
-                .collect();
-            let mut pixels: Vec<Pixel> = Vec::new();
-            for i in (0..content.len()).step_by(3) {
-                let red = content[i];
-                let green = content[i + 1];
-                let blue = content[i + 2];
-                pixels.push(Pixel { red, green, blue });
+            if width == 0 || height == 0 {
+                return None;
             }
-            Some(DMatrix::from_vec(height, width, pixels))
+            let mut pixels = Vec::new();
+            for line in lines.iter().take(height) {
+                let mut parts = line.split_whitespace();
+                for i in 0..width {
+                    let red: u8 = parts.next()?.parse().ok()?;
+                    let green: u8 = parts.next()?.parse().ok()?;
+                    let blue: u8 = parts.next()?.parse().ok()?;
+                    pixels.push(Pixel { red, green, blue });
+                }
+            }
+            if pixels.len() != width * height {
+                return None;
+            }
+            let mut matrix = DMatrix::zeros(height, width);
+            for (idx, pixel) in pixels.into_iter().enumerate() {
+                let row = idx / width;
+                let col = idx % width;
+                matrix[(row, col)] = pixel;
+            }
+            Some(matrix)
         }
 
         /// Write an image to a file.

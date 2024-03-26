@@ -1,4 +1,6 @@
 pub mod pixel {
+    use num_traits::Zero;
+
     #[derive(Clone, PartialEq, Debug)]
     pub struct Pixel {
         pub red: u8,
@@ -23,6 +25,32 @@ pub mod pixel {
 
         fn square(a: i16) -> i16 {
             a * a
+        }
+    }
+
+    impl Zero for Pixel {
+        fn zero() -> Self {
+            Self {
+                red: 0,
+                green: 0,
+                blue: 0,
+            }
+        }
+
+        fn is_zero(&self) -> bool {
+            self.red == 0 && self.green == 0 && self.blue == 0
+        }
+    }
+
+    impl std::ops::Add for Pixel {
+        type Output = Self;
+
+        fn add(self, other: Self) -> Self {
+            Self {
+                red: self.red.saturating_add(other.red),
+                green: self.green.saturating_add(other.green),
+                blue: self.blue.saturating_add(other.blue),
+            }
         }
     }
 }
