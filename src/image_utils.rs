@@ -95,7 +95,7 @@ pub mod image {
             let mut pixels = Vec::new();
             for line in lines.iter().take(height) {
                 let mut parts = line.split_whitespace();
-                for i in 0..width {
+                for _ in 0..width {
                     let red: u8 = parts.next()?.parse().ok()?;
                     let green: u8 = parts.next()?.parse().ok()?;
                     let blue: u8 = parts.next()?.parse().ok()?;
