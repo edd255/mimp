@@ -11,3 +11,10 @@ scan_fmt = "0.2.6"
 rand = "0.8.5"
 nalgebra = "*"
 num-traits = "0.2.18"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+incremental = true
+panic = "abort"
