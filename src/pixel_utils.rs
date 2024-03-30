@@ -9,11 +9,10 @@ pub mod pixel {
     }
 
     impl Pixel {
-        pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> i16 {
-            let red_diff: i16 = i16::from(pixel1.red) - i16::from(pixel2.red);
-            let green_diff: i16 = i16::from(pixel1.green) - i16::from(pixel2.green);
-            let blue_diff: i16 = i16::from(pixel1.blue) - i16::from(pixel2.blue);
-
+        pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> u32 {
+            let red_diff: u32 = u32::from(pixel1.red) - u32::from(pixel2.red);
+            let green_diff: u32 = u32::from(pixel1.green) - u32::from(pixel2.green);
+            let blue_diff: u32 = u32::from(pixel1.blue) - u32::from(pixel2.blue);
             Self::square(red_diff) + Self::square(green_diff) + Self::square(blue_diff)
         }
 
@@ -23,7 +22,7 @@ pub mod pixel {
             self.blue = 255 - self.blue;
         }
 
-        fn square(a: i16) -> i16 {
+        fn square(a: u32) -> u32 {
             a * a
         }
     }

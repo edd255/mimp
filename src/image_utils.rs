@@ -5,6 +5,7 @@ pub mod image {
     use crate::energy_utils::energy;
     use crate::pixel_utils::pixel::Pixel;
     use nalgebra::DMatrix;
+    use std::borrow::Cow;
     use std::fs;
     use std::io::Write;
 
@@ -22,9 +23,6 @@ pub mod image {
 
         /// Returns an image struct, parsed from a file
         ///
-        /// # Source:
-        ///   * <https://github.com/chris-paterson/PPM>
-        ///
         /// # Parameters:
         ///   `file` - The location of the file, as a String
         ///
@@ -35,16 +33,19 @@ pub mod image {
                 Ok(str) => str,
                 Err(err) => panic!("{err:?}"),
             };
-            let lines: Vec<&str> = contents.split('\n').collect();
-            let header: Vec<&str> = lines[0..3].to_vec();
-            let body: Vec<&str> = lines[3..].to_vec();
+            let mut lines = contents.lines();
+            let header: Vec<&str> = lines.by_ref().take(3).collect();
+            let body_str: Vec<String> = lines
+                .map(|line| Cow::<str>::Owned(line.replace('\n', " ")).into_owned())
+                .collect();
+            let body: Vec<&str> = body_str.iter().map(|s| s.as_str()).collect();
             let (magic_number, width, height, scale) = match Self::parse_header(&header) {
                 Some((m, w, h, s)) => (m, w, h, s),
                 None => panic!("Error in parsing the header"),
             };
             let pixels: DMatrix<Pixel> = match Self::parse_pixels(&body, width, height) {
-                Some(pixels) => pixels,
-                None => panic!("Error in parsing the pixels."),
+                Ok(pixels) => pixels,
+                Err(e) => panic!("{e:?}"),
             };
             Image {
                 magic_number,
@@ -54,9 +55,6 @@ pub mod image {
         }
 
         /// Parse the header of a PPM image file.
-        ///
-        /// # Source:
-        ///   * <https://github.com/chris-paterson/PPM>
         ///
         /// # Parameters:
         ///   `lines` - The lines to parse
@@ -80,30 +78,36 @@ pub mod image {
 
         /// Parse the pixels of the PPM image file.
         ///
-        /// # Source:
-        ///   * <https://github.com/chris-paterson/PPM>
-        ///
         /// # Parameters:
         ///   lines - The lines to parse
         ///
         /// # Returns:
         ///   `Option<Vec<Pixel>>`-  Returns an Optional of a pixel matrix, saved as vector
-        fn parse_pixels(lines: &[&str], width: usize, height: usize) -> Option<DMatrix<Pixel>> {
-            if width == 0 || height == 0 {
-                return None;
+        fn parse_pixels(
+            lines: &[&str],
+            width: usize,
+            height: usize,
+        ) -> Result<DMatrix<Pixel>, &'static str> {
+            let data: String = lines
+                .iter()
+                .map(|line| format!("{} ", line))
+                .collect::<String>()
+                .chars()
+                .collect();
+            let values: Vec<&str> = data.split_whitespace().collect();
+            if values.len() < width * height * 3 {
+                println!("Insufficient data for the specified dimensions");
             }
             let mut pixels = Vec::new();
-            for line in lines.iter().take(height) {
-                let mut parts = line.split_whitespace();
-                for _ in 0..width {
-                    let red: u8 = parts.next()?.parse().ok()?;
-                    let green: u8 = parts.next()?.parse().ok()?;
-                    let blue: u8 = parts.next()?.parse().ok()?;
+            for chunk in values.chunks(3) {
+                if let [r, g, b] = chunk {
+                    let red: u8 = r.parse().map_err(|_| "Failed to parse red component")?;
+                    let green: u8 = g.parse().map_err(|_| "Failed to parse green component")?;
+                    let blue: u8 = b.parse().map_err(|_| "Failed to parse blue component")?;
                     pixels.push(Pixel { red, green, blue });
+                } else {
+                    return Err("Invalid pixel data");
                 }
-            }
-            if pixels.len() != width * height {
-                return None;
             }
             let mut matrix = DMatrix::zeros(height, width);
             for (idx, pixel) in pixels.into_iter().enumerate() {
@@ -111,13 +115,10 @@ pub mod image {
                 let col = idx % width;
                 matrix[(row, col)] = pixel;
             }
-            Some(matrix)
+            Ok(matrix)
         }
 
         /// Write an image to a file.
-        ///
-        /// # Source:
-        ///   * <https://github.com/chris-paterson/PPM>
         ///
         /// # Parameters:
         ///   `filename` - path to the file
@@ -133,7 +134,7 @@ pub mod image {
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red} {green} {blue}").expect("Could not write pixel");
+                    write!(file, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
                 writeln!(file).expect("Could not write newline");
             }
@@ -168,15 +169,26 @@ pub mod image {
         //=== SEAM CARVING ========================================================================
 
         pub fn seam_carve(&mut self, iterations: usize, output: &String) {
+            let width = self.pixels.ncols();
             let mut border = self.pixels.ncols();
-            for _ in 0..iterations {
-                let energy_matrix = energy::calculate_energy(self, border);
+            for i in 0..iterations {
+                let energy_matrix = energy::calculate_energy(self, width);
+                if i == 0 || i == 1 {
+                    for j in 0..energy_matrix.nrows() {
+                        for i2 in 0..energy_matrix.ncols() {
+                            print!("{:?} ", energy_matrix[(j, i2)]);
+                        }
+                        println!();
+                    }
+                    println!();
+                }
                 let x = energy::calculate_min_energy_column(&energy_matrix, border);
+                println!("x: {x:?}");
                 let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
                 self.carve_path(&border, &seam);
                 border -= 1;
             }
-            self.crop(output, border);
+            self.crop(output, width - iterations);
         }
 
         fn carve_path(&mut self, border: &usize, seam: &[usize]) {
@@ -197,19 +209,19 @@ pub mod image {
         /// # Parameters:
         ///   `filename` - path to the file (as String)
         pub fn crop(&self, filename: &String, border: usize) {
-            assert!(border <= self.pixels.nrows());
+            assert!(border <= self.pixels.ncols());
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
-            writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
+            writeln!(file, "{} {}", border, self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-            for y in 0..border {
-                for x in 0..self.pixels.ncols() {
+            for x in 0..self.pixels.nrows() {
+                for y in 0..border {
                     let pixel = &self.pixels[(x, y)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red} {green} {blue}").expect("Could not write pixel");
+                    write!(file, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
                 writeln!(file).expect("Could not write newline");
             }
