@@ -76,7 +76,7 @@ pub mod energy {
         let mut seam = Vec::with_capacity(energy.nrows());
         seam.extend(std::iter::repeat(0).take(energy.nrows()));
         seam[energy.nrows() - 1] = start;
-        for j in energy.nrows()..0 {
+        for j in (0..energy.nrows()).rev() {
             let left = (j - 1, seam[j] - 1);
             let above = (j - 1, seam[j]);
             let right = (j - 1, seam[j] + 1);

@@ -171,19 +171,9 @@ pub mod image {
         pub fn seam_carve(&mut self, iterations: usize, output: &String) {
             let width = self.pixels.ncols();
             let mut border = self.pixels.ncols();
-            for i in 0..iterations {
+            for _ in 0..iterations {
                 let energy_matrix = energy::calculate_energy(self, width);
-                if i == 0 || i == 1 {
-                    for j in 0..energy_matrix.nrows() {
-                        for i2 in 0..energy_matrix.ncols() {
-                            print!("{:?} ", energy_matrix[(j, i2)]);
-                        }
-                        println!();
-                    }
-                    println!();
-                }
                 let x = energy::calculate_min_energy_column(&energy_matrix, border);
-                println!("x: {x:?}");
                 let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
                 self.carve_path(&border, &seam);
                 border -= 1;
