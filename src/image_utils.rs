@@ -132,20 +132,13 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for y in 0..self.pixels.nrows() {
-                for x in 0..self.pixels.ncols() {
-                    let pixel = &self.pixels[(x, y)];
+            for x in 0..self.pixels.nrows() {
+                for y in 0..self.pixels.ncols() {
+                    let pixel = &self.pixels[(y, x)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(
-                        buffer,
-                        "{red:3} {green:3} {blue:3} ",
-                        red = red,
-                        green = green,
-                        blue = blue
-                    )
-                    .expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
                 writeln!(buffer).expect("Could not write newline");
             }
@@ -194,7 +187,7 @@ pub mod image {
                 self.carve_path(&border, &seam);
                 border -= 1;
             }
-            self.crop(output, width - iterations);
+            self.crop(output, 0, width - iterations, 0, self.pixels.nrows());
         }
 
         fn carve_path(&mut self, border: &usize, seam: &[usize]) {
@@ -214,17 +207,19 @@ pub mod image {
         ///
         /// # Parameters:
         ///   `filename` - path to the file (as String)
-        pub fn crop(&self, filename: &String, border: usize) {
-            assert!(border <= self.pixels.ncols());
+        pub fn crop(&self, filename: &String, x1: usize, x2: usize, y1: usize, y2: usize) {
+            assert!(x1 <= self.pixels.ncols());
+            assert!(x2 <= self.pixels.ncols());
+            assert!(y1 <= self.pixels.nrows());
+            assert!(y2 <= self.pixels.nrows());
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
-            writeln!(file, "{} {}", border, self.pixels.nrows())
-                .expect("Could not write height and width.");
+            writeln!(file, "{} {}", x2 - x1, y2 - y1).expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for x in 0..self.pixels.nrows() {
-                for y in 0..border {
-                    let pixel = &self.pixels[(x, y)];
+            for y in y1..y2 {
+                for x in x1..x2 {
+                    let pixel = &self.pixels[(y, x)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
@@ -248,9 +243,9 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for y in 0..self.pixels.ncols() {
-                for x in 0..self.pixels.nrows() {
-                    let pixel = &self.pixels[(x, y)];
+            for x in 0..self.pixels.ncols() {
+                for y in 0..self.pixels.nrows() {
+                    let pixel = &self.pixels[(y, x)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
@@ -274,9 +269,9 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for y in 0..self.pixels.ncols() {
-                for x in 0..self.pixels.nrows() {
-                    let pixel = &self.pixels[(self.pixels.nrows() - 1 - x, y)];
+            for x in 0..self.pixels.ncols() {
+                for y in 0..self.pixels.nrows() {
+                    let pixel = &self.pixels[(self.pixels.nrows() - 1 - y, x)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
@@ -300,9 +295,9 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for x in 0..self.pixels.nrows() {
-                for y in 0..self.pixels.ncols() {
-                    let pixel = &mut self.pixels[(x, y)];
+            for y in 0..self.pixels.nrows() {
+                for x in 0..self.pixels.ncols() {
+                    let pixel = &mut self.pixels[(y, x)];
                     pixel.invert();
                     let red = pixel.red;
                     let green = pixel.green;
@@ -327,9 +322,9 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for x in 0..self.pixels.nrows() {
-                for y in 0..self.pixels.ncols() {
-                    let pixel = &self.pixels[(x, self.pixels.ncols() - 1 - y)];
+            for y in 0..self.pixels.nrows() {
+                for x in 0..self.pixels.ncols() {
+                    let pixel = &self.pixels[(y, self.pixels.ncols() - 1 - x)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;

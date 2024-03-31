@@ -46,6 +46,19 @@ enum Commands {
     Rotate {},
     Invert {},
     Mirror {},
+    Crop {
+        #[arg(long)]
+        x1: usize,
+
+        #[arg(long)]
+        x2: usize,
+
+        #[arg(long)]
+        y1: usize,
+
+        #[arg(long)]
+        y2: usize,
+    },
 }
 
 fn main() {
@@ -77,6 +90,10 @@ fn main() {
         Some(Commands::Mirror {}) => {
             let image = Image::read(&cli.filename);
             image.mirror(&cli.output.to_string());
+        }
+        Some(Commands::Crop { x1, x2, y1, y2 }) => {
+            let image = Image::read(&cli.filename);
+            image.crop(&cli.output.to_string(), *x1, *x2, *y1, *y2);
         }
         None => {}
     }
