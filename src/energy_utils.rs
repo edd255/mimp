@@ -10,25 +10,28 @@ pub mod energy {
 
     pub fn calculate_energy(image: &Image, energy: &mut DMatrix<u32>, border: usize) {
         // Calculation of local energy
-        for i in 0..image.pixels.nrows() {
-            for j in 0..border {
+        // Edge Case: First Element
+        energy[(0, 0)] = 0;
+        // Edge Case: First Row
+        for j in 1..border {
+            let current = (0, j);
+            let left = (0, j - 1);
+            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left]);
+        }
+        // Edge Case: Left Border
+        for i in 1..image.pixels.nrows() {
+            let current = (i, 0);
+            let above = (i - 1, 0);
+            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[above]);
+        }
+        // No Edge Cases
+        for i in 1..image.pixels.nrows() {
+            for j in 1..border {
                 let current = (i, j);
                 let left = (i, j - 1);
-                let center = (i - 1, j);
-                if current == (0, 0) {
-                    // Edge Case: First Element
-                    energy[current] = 0;
-                } else if i == 0 {
-                    energy[current] =
-                        Pixel::color_diff(&image.pixels[current], &image.pixels[left]);
-                } else if j == 0 {
-                    energy[current] =
-                        Pixel::color_diff(&image.pixels[current], &image.pixels[center]);
-                } else {
-                    energy[current] =
-                        Pixel::color_diff(&image.pixels[current], &image.pixels[left])
-                            + Pixel::color_diff(&image.pixels[current], &image.pixels[center]);
-                }
+                let above = (i - 1, j);
+                energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left])
+                    + Pixel::color_diff(&image.pixels[current], &image.pixels[above]);
             }
         }
         // Calculation of total energy
@@ -36,17 +39,17 @@ pub mod energy {
             for j in 0..border {
                 let current = (i, j);
                 let left = (i - 1, j - 1);
-                let center = (i - 1, j);
+                let above = (i - 1, j);
                 let right = (i - 1, j + 1);
                 if j == 0 {
                     // Edge Case: Left Border
-                    energy[current] += min(energy[center], energy[right]);
+                    energy[current] += min(energy[above], energy[right]);
                 } else if j == border - 1 {
                     // Edge Case: Right Border
-                    energy[current] += min(energy[center], energy[left]);
+                    energy[current] += min(energy[above], energy[left]);
                 } else {
                     // No Edge Cases
-                    energy[current] += min(min(energy[center], energy[left]), energy[right]);
+                    energy[current] += min(min(energy[above], energy[left]), energy[right]);
                 }
             }
         }
