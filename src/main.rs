@@ -6,15 +6,15 @@
 /// Seam Carving uses color differences of neighboring pixels as dispensability score. This
 /// difference is called energy. This crate contains methods to calculate the energy of an image
 /// and to find the optimal path according to this dispensability score.
-mod energy_utils;
+mod energy;
 
 /// This crate contains the data structure that represents images as pixel matrices and
 /// functionalities as cropping, rotating, inverting and seam carving.
-mod image_utils;
-mod pixel_utils;
-use image_utils::image::Image;
+mod image;
+mod pixels;
+use image::image::Image;
 use nalgebra::DMatrix;
-use pixel_utils::pixel::Pixel;
+use pixels::pixel::Pixel;
 
 extern crate rand;
 use clap::{Parser, Subcommand};

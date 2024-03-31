@@ -3,8 +3,8 @@
 /// and to find the optimal path according to this dispensability score.
 
 pub mod energy {
-    use crate::image_utils::image::Image;
-    use crate::pixel_utils::pixel::Pixel;
+    use crate::image::image::Image;
+    use crate::pixels::pixel::Pixel;
     use nalgebra::DMatrix;
     use std::cmp::min;
 
