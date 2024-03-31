@@ -10,9 +10,9 @@ pub mod pixel {
 
     impl Pixel {
         pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> u32 {
-            let red_diff = pixel1.red as i32 - pixel2.red as i32;
-            let green_diff = pixel1.green as i32 - pixel2.green as i32;
-            let blue_diff = pixel1.blue as i32 - pixel2.blue as i32;
+            let red_diff = i32::from(pixel1.red) - i32::from(pixel2.red);
+            let green_diff = i32::from(pixel1.green) - i32::from(pixel2.green);
+            let blue_diff = i32::from(pixel1.blue) - i32::from(pixel2.blue);
             let red_diff_squared = red_diff * red_diff;
             let green_diff_squared = green_diff * green_diff;
             let blue_diff_squared = blue_diff * blue_diff;

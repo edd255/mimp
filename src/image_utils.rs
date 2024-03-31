@@ -39,10 +39,9 @@ pub mod image {
             let body_str: Vec<String> = lines
                 .map(|line| Cow::<str>::Owned(line.replace('\n', " ")).into_owned())
                 .collect();
-            let body: Vec<&str> = body_str.iter().map(|s| s.as_str()).collect();
-            let (magic_number, width, height, scale) = match Self::parse_header(&header) {
-                Some((m, w, h, s)) => (m, w, h, s),
-                None => panic!("Error in parsing the header"),
+            let body: Vec<&str> = body_str.iter().map(std::string::String::as_str).collect();
+            let Some((magic_number, width, height, scale)) = Self::parse_header(&header) else {
+                panic!("Error in parsing the header")
             };
             let pixels: DMatrix<Pixel> = match Self::parse_pixels(&body, width, height) {
                 Ok(pixels) => pixels,
@@ -92,7 +91,7 @@ pub mod image {
             let data: String = lines
                 .iter()
                 .fold(String::new(), |mut acc, line| {
-                    acc.push_str(&format!("{} ", line));
+                    acc.push_str(&format!("{line} "));
                     acc
                 })
                 .chars()
@@ -181,16 +180,16 @@ pub mod image {
             let mut energy_matrix: DMatrix<u32> =
                 DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
             for _ in 0..iterations {
-                energy::calculate_energy(self, &mut energy_matrix, width);
+                energy::calculate_energy_matrix(self, &mut energy_matrix, width);
                 let x = energy::calculate_min_energy_column(&energy_matrix, border);
                 let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
-                self.carve_path(&border, &seam);
+                self.carve_path(border, &seam);
                 border -= 1;
             }
             self.crop(output, 0, width - iterations, 0, self.pixels.nrows());
         }
 
-        fn carve_path(&mut self, border: &usize, seam: &[usize]) {
+        fn carve_path(&mut self, border: usize, seam: &[usize]) {
             for j in 0..self.pixels.nrows() {
                 let col = *seam.get(j).unwrap();
                 for i in col..border - 1 {

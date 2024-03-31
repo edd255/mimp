@@ -8,7 +8,7 @@ pub mod energy {
     use nalgebra::DMatrix;
     use std::cmp::min;
 
-    pub fn calculate_energy(image: &Image, energy: &mut DMatrix<u32>, border: usize) {
+    pub fn calculate_energy_matrix(image: &Image, energy: &mut DMatrix<u32>, border: usize) {
         // Calculation of local energy
         // Edge Case: First Element
         energy[(0, 0)] = 0;
