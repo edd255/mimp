@@ -2,8 +2,8 @@
 /// functionalities as cropping, rotating, inverting and seam carving.
 
 pub mod image {
-    use crate::energy::energy;
-    use crate::pixels::pixel::Pixel;
+    use crate::energy_utils::energy;
+    use crate::pixel_utils::pixel::Pixel;
     use nalgebra::DMatrix;
     use std::borrow::Cow;
     use std::fs;
