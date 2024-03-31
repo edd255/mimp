@@ -90,8 +90,10 @@ pub mod image {
         ) -> Result<DMatrix<Pixel>, &'static str> {
             let data: String = lines
                 .iter()
-                .map(|line| format!("{} ", line))
-                .collect::<String>()
+                .fold(String::new(), |mut acc, line| {
+                    acc.push_str(&format!("{} ", line));
+                    acc
+                })
                 .chars()
                 .collect();
             let values: Vec<&str> = data.split_whitespace().collect();
