@@ -8,6 +8,7 @@ pub mod image {
     use std::borrow::Cow;
     use std::fs;
     use std::io::Write;
+    use std::fmt::Write as OtherWrite;
 
     /// Images in the PPM format have a `magic_number`, e.g. P3 for Portable Pixmaps (ASCII), and a
     /// `scale` is the maximum value for each color. Images are represented as pixel matrices, here
@@ -130,16 +131,20 @@ pub mod image {
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
+            let mut buffer = String::new();
             for y in 0..self.pixels.nrows() {
                 for x in 0..self.pixels.ncols() {
                     let pixel = &self.pixels[(x, y)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ", red = red, green = green, blue = blue)
+                        .expect("Could not write pixel");
                 }
-                writeln!(file).expect("Could not write newline");
+                writeln!(buffer).expect("Could not write newline");
             }
+            file.write_all(buffer.as_bytes()).expect("Could not write buffer to file");
+            buffer.clear();
         }
 
         //=== IMAGE STATISTICS ====================================================================
@@ -207,16 +212,20 @@ pub mod image {
             writeln!(file, "{} {}", border, self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
+            let mut buffer = String::new();
             for x in 0..self.pixels.nrows() {
                 for y in 0..border {
                     let pixel = &self.pixels[(x, y)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ", red = red, green = green, blue = blue)
+                        .expect("Could not write pixel");
                 }
-                writeln!(file).expect("Could not write newline");
+                writeln!(buffer).expect("Could not write newline");
             }
+            file.write_all(buffer.as_bytes()).expect("Could not write buffer to file");
+            buffer.clear();
         }
 
         /// Rotate an image.
