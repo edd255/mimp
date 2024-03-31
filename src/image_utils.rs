@@ -6,9 +6,9 @@ pub mod image {
     use crate::pixel_utils::pixel::Pixel;
     use nalgebra::DMatrix;
     use std::borrow::Cow;
+    use std::fmt::Write as OtherWrite;
     use std::fs;
     use std::io::Write;
-    use std::fmt::Write as OtherWrite;
 
     /// Images in the PPM format have a `magic_number`, e.g. P3 for Portable Pixmaps (ASCII), and a
     /// `scale` is the maximum value for each color. Images are represented as pixel matrices, here
@@ -138,12 +138,19 @@ pub mod image {
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(buffer, "{red:3} {green:3} {blue:3} ", red = red, green = green, blue = blue)
-                        .expect("Could not write pixel");
+                    write!(
+                        buffer,
+                        "{red:3} {green:3} {blue:3} ",
+                        red = red,
+                        green = green,
+                        blue = blue
+                    )
+                    .expect("Could not write pixel");
                 }
                 writeln!(buffer).expect("Could not write newline");
             }
-            file.write_all(buffer.as_bytes()).expect("Could not write buffer to file");
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
             buffer.clear();
         }
 
@@ -178,8 +185,10 @@ pub mod image {
         pub fn seam_carve(&mut self, iterations: usize, output: &String) {
             let width = self.pixels.ncols();
             let mut border = self.pixels.ncols();
+            let mut energy_matrix: DMatrix<u32> =
+                DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
             for _ in 0..iterations {
-                let energy_matrix = energy::calculate_energy(self, width);
+                energy::calculate_energy(self, &mut energy_matrix, width);
                 let x = energy::calculate_min_energy_column(&energy_matrix, border);
                 let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
                 self.carve_path(&border, &seam);
@@ -219,12 +228,19 @@ pub mod image {
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(buffer, "{red:3} {green:3} {blue:3} ", red = red, green = green, blue = blue)
-                        .expect("Could not write pixel");
+                    write!(
+                        buffer,
+                        "{red:3} {green:3} {blue:3} ",
+                        red = red,
+                        green = green,
+                        blue = blue
+                    )
+                    .expect("Could not write pixel");
                 }
                 writeln!(buffer).expect("Could not write newline");
             }
-            file.write_all(buffer.as_bytes()).expect("Could not write buffer to file");
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
             buffer.clear();
         }
 

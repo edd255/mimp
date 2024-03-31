@@ -8,9 +8,8 @@ pub mod energy {
     use nalgebra::DMatrix;
     use std::cmp::min;
 
-    pub fn calculate_energy(image: &Image, border: usize) -> DMatrix<u32> {
-        let mut energy: DMatrix<u32> =
-            DMatrix::from_element(image.pixels.nrows(), image.pixels.ncols(), 0);
+    pub fn calculate_energy(image: &Image, energy: &mut DMatrix<u32>, border: usize) {
+        // Calculation of local energy
         for i in 0..image.pixels.nrows() {
             for j in 0..border {
                 let current = (i, j);
@@ -32,6 +31,7 @@ pub mod energy {
                 }
             }
         }
+        // Calculation of total energy
         for i in 1..image.pixels.nrows() {
             for j in 0..border {
                 let current = (i, j);
@@ -50,19 +50,13 @@ pub mod energy {
                 }
             }
         }
-        energy
     }
 
     pub fn calculate_min_energy_column(energy: &DMatrix<u32>, border: usize) -> usize {
         let mut column: usize = 0;
-        let h = energy.nrows();
-        for i in 0..border - 1 {
-            let next = (h - 1, i + 1);
-            let acc = (h - 1, column);
-            if energy[acc] <= energy[next] {
-                continue;
-            } else {
-                column = i + 1;
+        for i in 1..border {
+            if energy[(energy.nrows() - 1, column)] > energy[(energy.nrows() - 1, i)] {
+                column = i;
             }
         }
         column
