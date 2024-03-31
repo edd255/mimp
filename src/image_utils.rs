@@ -315,5 +315,31 @@ pub mod image {
                 .expect("Could not write buffer to file");
             buffer.clear();
         }
+
+        /// Mirror an image
+        ///
+        /// # Parameters:
+        ///   `filename` - path to the file (as String)
+        pub fn mirror(&self, filename: &String) {
+            let mut file = fs::File::create(filename).expect("Could not write to file");
+            writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
+            writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
+                .expect("Could not write height and width.");
+            writeln!(file, "{}", self.scale).expect("Could not write scale");
+            let mut buffer = String::new();
+            for x in 0..self.pixels.nrows() {
+                for y in 0..self.pixels.ncols() {
+                    let pixel = &self.pixels[(x, self.pixels.ncols() - 1 - y)];
+                    let red = pixel.red;
+                    let green = pixel.green;
+                    let blue = pixel.blue;
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
+                }
+                writeln!(buffer).expect("Could not write newline");
+            }
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
+            buffer.clear();
+        }
     }
 }

@@ -9,7 +9,8 @@
 mod energy_utils;
 
 /// This crate contains the data structure that represents images as pixel matrices and
-/// functionalities as cropping, transposing, inverting, rotating, and seam carving.
+/// functionalities as cropping, transposing, inverting, rotating, mirroring, and the more advanced
+/// functionality of seam carving.
 mod image_utils;
 mod pixel_utils;
 use image_utils::image::Image;
@@ -44,6 +45,7 @@ enum Commands {
     Transpose {},
     Rotate {},
     Invert {},
+    Mirror {},
 }
 
 fn main() {
@@ -71,6 +73,10 @@ fn main() {
         Some(Commands::Invert {}) => {
             let mut image = Image::read(&cli.filename);
             image.invert(&cli.output.to_string());
+        }
+        Some(Commands::Mirror {}) => {
+            let image = Image::read(&cli.filename);
+            image.mirror(&cli.output.to_string());
         }
         None => {}
     }
