@@ -228,14 +228,7 @@ pub mod image {
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(
-                        buffer,
-                        "{red:3} {green:3} {blue:3} ",
-                        red = red,
-                        green = green,
-                        blue = blue
-                    )
-                    .expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
                 writeln!(buffer).expect("Could not write newline");
             }
@@ -244,26 +237,56 @@ pub mod image {
             buffer.clear();
         }
 
-        /// Rotate an image.
+        /// Transposes an image.
+        ///
+        /// Parameters:
+        ///   `filename` - Path to the file
+        pub fn transpose(&self, filename: &String) {
+            let mut file = fs::File::create(filename).expect("Could not write to file");
+            writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
+            writeln!(file, "{} {}", self.pixels.nrows(), self.pixels.ncols())
+                .expect("Could not write height and width.");
+            writeln!(file, "{}", self.scale).expect("Could not write scale");
+            let mut buffer = String::new();
+            for y in 0..self.pixels.ncols() {
+                for x in 0..self.pixels.nrows() {
+                    let pixel = &self.pixels[(x, y)];
+                    let red = pixel.red;
+                    let green = pixel.green;
+                    let blue = pixel.blue;
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
+                }
+                writeln!(buffer).expect("Could not write newline");
+            }
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
+            buffer.clear();
+        }
+
+        /// Rotates an image.
         ///
         /// Parameters:
         ///   `filename` - Path to the file
         pub fn rotate(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
-            writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
+            writeln!(file, "{} {}", self.pixels.nrows(), self.pixels.ncols())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-            for y in 0..self.pixels.nrows() {
-                for x in 0..self.pixels.ncols() {
-                    let pixel = &self.pixels[(x, y)];
+            let mut buffer = String::new();
+            for y in 0..self.pixels.ncols() {
+                for x in 0..self.pixels.nrows() {
+                    let pixel = &self.pixels[(self.pixels.nrows() - 1 - x, y)];
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red} {green} {blue}").expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
-                writeln!(file).expect("Could not write newline");
+                writeln!(buffer).expect("Could not write newline");
             }
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
+            buffer.clear();
         }
 
         /// Rotate an image.
@@ -276,17 +299,21 @@ pub mod image {
             writeln!(file, "{} {}", self.pixels.ncols(), self.pixels.nrows())
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
-            for y in 0..self.pixels.nrows() {
-                for x in 0..self.pixels.ncols() {
+            let mut buffer = String::new();
+            for x in 0..self.pixels.nrows() {
+                for y in 0..self.pixels.ncols() {
                     let pixel = &mut self.pixels[(x, y)];
                     pixel.invert();
                     let red = pixel.red;
                     let green = pixel.green;
                     let blue = pixel.blue;
-                    write!(file, "{red}, {green} {blue}").expect("Could not write pixel");
+                    write!(buffer, "{red:3} {green:3} {blue:3} ").expect("Could not write pixel");
                 }
-                writeln!(file).expect("Could not write newline");
+                writeln!(buffer).expect("Could not write newline");
             }
+            file.write_all(buffer.as_bytes())
+                .expect("Could not write buffer to file");
+            buffer.clear();
         }
     }
 }
