@@ -65,7 +65,17 @@ pub mod energy {
         column
     }
 
-    pub fn calculate_optimal_path(
+    pub fn calculate_min_energy_row(energy: &DMatrix<u32>, border: usize) -> usize {
+        let mut row: usize = 0;
+        for i in 1..border {
+            if energy[(row, energy.ncols() - 1)] > energy[(i, energy.ncols() - 1)] {
+                row = i;
+            }
+        }
+        row
+    }
+
+    pub fn calculate_optimal_vertical_path(
         energy: &DMatrix<u32>,
         border: usize,
         start: usize,
@@ -76,6 +86,58 @@ pub mod energy {
             let left = (j - 1, seam[j] - 1);
             let above = (j - 1, seam[j]);
             let right = (j - 1, seam[j] + 1);
+            if seam[j] == 0 {
+                // Case: Left border
+                if energy[above] <= energy[right] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] + 1;
+                }
+            } else if seam[j] == border - 1 {
+                // Case: Right Border
+                if energy[above] <= energy[left] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] - 1;
+                }
+            } else if energy[above] == energy[left] {
+                // Precedence for multiple optimal pixels
+                if energy[above] <= energy[right] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] + 1;
+                }
+            } else if energy[above] <= energy[right] {
+                if energy[above] <= energy[left] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] - 1;
+                }
+            } else {
+                // Remainder
+                if energy[left] < energy[above] && energy[left] <= energy[right] {
+                    seam[j - 1] = seam[j] - 1;
+                } else if energy[above] < energy[left] && energy[above] <= energy[right] {
+                    seam[j - 1] = seam[j];
+                } else {
+                    seam[j - 1] = seam[j] + 1;
+                }
+            }
+        }
+        seam
+    }
+
+    pub fn calculate_optimal_horizontal_path(
+        energy: &DMatrix<u32>,
+        border: usize,
+        start: usize,
+    ) -> Vec<usize> {
+        let mut seam = vec![0; energy.ncols()];
+        seam[energy.ncols() - 1] = start;
+        for j in (1..energy.ncols()).rev() {
+            let left = (seam[j] - 1, j - 1);
+            let above = (seam[j], j - 1);
+            let right = (seam[j] + 1, j - 1);
             if seam[j] == 0 {
                 // Case: Left border
                 if energy[above] <= energy[right] {

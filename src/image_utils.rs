@@ -174,28 +174,54 @@ pub mod image {
 
         //=== SEAM CARVING ========================================================================
 
-        pub fn seam_carve(&mut self, iterations: usize, output: &String) {
-            let width = self.pixels.ncols();
-            let mut border = self.pixels.ncols();
-            let mut energy_matrix: DMatrix<u32> =
-                DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
-            for _ in 0..iterations {
-                energy::calculate_energy_matrix(self, &mut energy_matrix, width);
-                let x = energy::calculate_min_energy_column(&energy_matrix, border);
-                let seam = energy::calculate_optimal_path(&energy_matrix, border, x);
-                self.carve_path(border, &seam);
-                border -= 1;
+        pub fn seam_carve(&mut self, iterations: usize, output: &String, vertical: bool) {
+            if vertical {
+                let width = self.pixels.ncols();
+                let mut border = self.pixels.ncols();
+                let mut energy_matrix: DMatrix<u32> =
+                    DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
+                for _ in 0..iterations {
+                    energy::calculate_energy_matrix(self, &mut energy_matrix, width);
+                    let x = energy::calculate_min_energy_column(&energy_matrix, border);
+                    let seam = energy::calculate_optimal_vertical_path(&energy_matrix, border, x);
+                    self.carve_vertical_path(border, &seam);
+                    border -= 1;
+                }
+                self.crop(output, 0, width - iterations, 0, self.pixels.nrows());
+            } else {
+                let height = self.pixels.nrows();
+                let mut border = self.pixels.nrows();
+                let mut energy_matrix: DMatrix<u32> =
+                    DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
+                for _ in 0..iterations {
+                    energy::calculate_energy_matrix(self, &mut energy_matrix, height);
+                    let x = energy::calculate_min_energy_row(&energy_matrix, border);
+                    let seam = energy::calculate_optimal_horizontal_path(&energy_matrix, border, x);
+                    self.carve_horizontal_path(border, &seam);
+                    border -= 1;
+                }
+                self.crop(output, 0, self.pixels.ncols(), 0, height - iterations);
             }
-            self.crop(output, 0, width - iterations, 0, self.pixels.nrows());
         }
 
-        fn carve_path(&mut self, border: usize, seam: &[usize]) {
+        fn carve_vertical_path(&mut self, border: usize, seam: &[usize]) {
             for j in 0..self.pixels.nrows() {
                 let col = *seam.get(j).unwrap();
                 for i in col..border - 1 {
                     self.pixels[(j, i)].red = self.pixels[(j, i + 1)].red;
                     self.pixels[(j, i)].green = self.pixels[(j, i + 1)].green;
                     self.pixels[(j, i)].blue = self.pixels[(j, i + 1)].blue;
+                }
+            }
+        }
+
+        fn carve_horizontal_path(&mut self, border: usize, seam: &[usize]) {
+            for j in 0..self.pixels.ncols() {
+                let row = *seam.get(j).unwrap();
+                for i in row..border - 1 {
+                    self.pixels[(i, j)].red = self.pixels[(i + 1, j)].red;
+                    self.pixels[(i, j)].green = self.pixels[(i + 1, j)].green;
+                    self.pixels[(i, j)].blue = self.pixels[(i + 1, j)].blue;
                 }
             }
         }

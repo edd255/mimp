@@ -39,6 +39,9 @@ enum Commands {
     SeamCarve {
         #[arg(short, long)]
         iterations: usize,
+
+        #[arg(short, long)]
+        direction: char,
     },
     Statistics {},
     Random {},
@@ -64,9 +67,16 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
     match &cli.command {
-        Some(Commands::SeamCarve { iterations }) => {
+        Some(Commands::SeamCarve {
+            iterations,
+            direction,
+        }) => {
             let mut image = Image::read(&cli.filename);
-            image.seam_carve(*iterations, &cli.output);
+            if *direction == 'v' {
+                image.seam_carve(*iterations, &cli.output, true);
+            } else {
+                image.seam_carve(*iterations, &cli.output, false);
+            }
         }
         Some(Commands::Statistics {}) => {
             let image = Image::read(&cli.filename);
