@@ -8,7 +8,11 @@ pub mod energy {
     use nalgebra::DMatrix;
     use std::cmp::min;
 
-    pub fn calculate_energy_matrix(image: &Image, energy: &mut DMatrix<u32>, border: usize) {
+    pub fn calculate_vertical_energy_matrix(
+        image: &Image,
+        energy: &mut DMatrix<u32>,
+        border: usize,
+    ) {
         // Calculation of local energy
         // Edge Case: First Element
         energy[(0, 0)] = 0;
@@ -41,6 +45,57 @@ pub mod energy {
                 let left = (i - 1, j - 1);
                 let above = (i - 1, j);
                 let right = (i - 1, j + 1);
+                if j == 0 {
+                    // Edge Case: Left Border
+                    energy[current] += min(energy[above], energy[right]);
+                } else if j == border - 1 {
+                    // Edge Case: Right Border
+                    energy[current] += min(energy[above], energy[left]);
+                } else {
+                    // No Edge Cases
+                    energy[current] += min(min(energy[above], energy[left]), energy[right]);
+                }
+            }
+        }
+    }
+
+    pub fn calculate_horizontal_energy_matrix(
+        image: &Image,
+        energy: &mut DMatrix<u32>,
+        border: usize,
+    ) {
+        // Calculation of local energy
+        // Edge Case: First Element
+        energy[(0, 0)] = 0;
+        // Edge Case: First Column
+        for j in 1..border {
+            let current = (j, 0);
+            let left = (j - 1, 0);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left]);
+        }
+        // Edge Case: Left Border
+        for i in 1..image.pixels.ncols() {
+            let current = (0, i);
+            let above = (0, i - 1);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[above]);
+        }
+        // No Edge Cases
+        for i in 1..image.pixels.ncols() {
+            for j in 1..border {
+                let current = (j, i);
+                let left = (j - 1, i);
+                let above = (j, i - 1);
+                energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left])
+                    + Pixel::color_diff(image.pixels[current], image.pixels[above]);
+            }
+        }
+        // Calculation of total energy
+        for i in 1..image.pixels.ncols() {
+            for j in 0..border {
+                let current = (j, i);
+                let left = (j - 1, i - 1);
+                let above = (j, i - 1);
+                let right = (j + 1, i - 1);
                 if j == 0 {
                     // Edge Case: Left Border
                     energy[current] += min(energy[above], energy[right]);

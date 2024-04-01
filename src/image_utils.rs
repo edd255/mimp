@@ -181,7 +181,7 @@ pub mod image {
                 let mut energy_matrix: DMatrix<u32> =
                     DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
                 for _ in 0..iterations {
-                    energy::calculate_energy_matrix(self, &mut energy_matrix, width);
+                    energy::calculate_vertical_energy_matrix(self, &mut energy_matrix, width);
                     let x = energy::calculate_min_energy_column(&energy_matrix, border);
                     let seam = energy::calculate_optimal_vertical_path(&energy_matrix, border, x);
                     self.carve_vertical_path(border, &seam);
@@ -194,7 +194,7 @@ pub mod image {
                 let mut energy_matrix: DMatrix<u32> =
                     DMatrix::from_element(self.pixels.nrows(), self.pixels.ncols(), 0);
                 for _ in 0..iterations {
-                    energy::calculate_energy_matrix(self, &mut energy_matrix, height);
+                    energy::calculate_horizontal_energy_matrix(self, &mut energy_matrix, height);
                     let x = energy::calculate_min_energy_row(&energy_matrix, border);
                     let seam = energy::calculate_optimal_horizontal_path(&energy_matrix, border, x);
                     self.carve_horizontal_path(border, &seam);
