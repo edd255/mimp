@@ -69,14 +69,14 @@ enum Commands {
         #[arg(long)]
         y: usize,
 
-        #[arg(long)]
-        r: u8,
+        #[arg(short, long)]
+        red: u8,
 
-        #[arg(long)]
-        g: u8,
+        #[arg(short, long)]
+        green: u8,
 
-        #[arg(long)]
-        b: u8,
+        #[arg(short, long)]
+        blue: u8,
     },
 }
 
@@ -121,9 +121,15 @@ fn main() {
             let image = Image::read(&cli.filename);
             image.crop(&cli.output.to_string(), *x1, *x2, *y1, *y2);
         }
-        Some(Commands::LandFill { x, y, r, g, b }) => {
+        Some(Commands::LandFill {
+            x,
+            y,
+            red,
+            green,
+            blue,
+        }) => {
             let mut image = Image::read(&cli.filename);
-            image.landfill(&cli.output.to_string(), *x, *y, *r, *g, *b);
+            image.landfill(&cli.output.to_string(), (*x, *y), (*red, *green, *blue));
         }
         None => {}
     }

@@ -9,7 +9,8 @@ pub mod pixel {
     }
 
     impl Pixel {
-        pub fn color_diff(pixel1: &Pixel, pixel2: &Pixel) -> u32 {
+        #[allow(clippy::cast_sign_loss)]
+        pub fn color_diff(pixel1: Pixel, pixel2: Pixel) -> u32 {
             let red_diff = i32::from(pixel1.red) - i32::from(pixel2.red);
             let green_diff = i32::from(pixel1.green) - i32::from(pixel2.green);
             let blue_diff = i32::from(pixel1.blue) - i32::from(pixel2.blue);

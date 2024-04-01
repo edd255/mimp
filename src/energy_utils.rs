@@ -16,13 +16,13 @@ pub mod energy {
         for j in 1..border {
             let current = (0, j);
             let left = (0, j - 1);
-            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left]);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left]);
         }
         // Edge Case: Left Border
         for i in 1..image.pixels.nrows() {
             let current = (i, 0);
             let above = (i - 1, 0);
-            energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[above]);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[above]);
         }
         // No Edge Cases
         for i in 1..image.pixels.nrows() {
@@ -30,8 +30,8 @@ pub mod energy {
                 let current = (i, j);
                 let left = (i, j - 1);
                 let above = (i - 1, j);
-                energy[current] = Pixel::color_diff(&image.pixels[current], &image.pixels[left])
-                    + Pixel::color_diff(&image.pixels[current], &image.pixels[above]);
+                energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left])
+                    + Pixel::color_diff(image.pixels[current], image.pixels[above]);
             }
         }
         // Calculation of total energy

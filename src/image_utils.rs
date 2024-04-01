@@ -375,15 +375,9 @@ pub mod image {
         ///   `red` - red pixel value
         ///   `green` - green pixel value
         ///   `blue` - blue pixel value
-        pub fn landfill(
-            &mut self,
-            filename: &String,
-            x: usize,
-            y: usize,
-            red: u8,
-            green: u8,
-            blue: u8,
-        ) {
+        pub fn landfill(&mut self, filename: &String, coords: (usize, usize), rgb: (u8, u8, u8)) {
+            let (x, y) = coords;
+            let (red, green, blue) = rgb;
             if x >= self.pixels.ncols() && y >= self.pixels.nrows() {
                 return;
             }
@@ -431,6 +425,7 @@ pub mod image {
             }
             self.write(filename);
         }
+
         fn inside(rgb: (u8, u8, u8), new_point: Pixel) -> bool {
             rgb.0 == new_point.red && rgb.1 == new_point.green && rgb.2 == new_point.blue
         }
