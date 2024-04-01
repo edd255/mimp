@@ -376,50 +376,51 @@ pub mod image {
         ///   `green` - green pixel value
         ///   `blue` - blue pixel value
         pub fn landfill(&mut self, filename: &String, coords: (usize, usize), rgb: (u8, u8, u8)) {
-            let (x, y) = coords;
+            env_logger::init();
+            let (y, x) = coords;
             let (red, green, blue) = rgb;
             if x >= self.pixels.ncols() && y >= self.pixels.nrows() {
                 return;
             }
             let original_point = (
-                self.pixels[(x, y)].red,
-                self.pixels[(x, y)].green,
-                self.pixels[(x, y)].blue,
+                self.pixels[(y, x)].red,
+                self.pixels[(y, x)].green,
+                self.pixels[(y, x)].blue,
             );
             let mut stack: Vec<(usize, usize)> = vec![];
-            stack.push((x, y));
+            stack.push((y, x));
             while !stack.is_empty() {
-                let Some((x1, y1)) = stack.pop() else {
+                let Some((y1, x1)) = stack.pop() else {
                     break;
                 };
-                let mut px = self.pixels[(x1, y1)];
+                let mut px = self.pixels[(y1, x1)];
                 if Self::inside(original_point, px) {
-                    self.pixels[(x1, y1)].red = red;
-                    self.pixels[(x1, y1)].green = green;
-                    self.pixels[(x1, y1)].blue = blue;
+                    self.pixels[(y1, x1)].red = red;
+                    self.pixels[(y1, x1)].green = green;
+                    self.pixels[(y1, x1)].blue = blue;
                 }
-                if x1 + 1 < self.pixels.ncols() {
-                    px = self.pixels[(x1 + 1, y)];
+                if x1 + 1 < self.pixels.ncols() && y1 < self.pixels.nrows() {
+                    px = self.pixels[(y1, x1 + 1)];
                     if Self::inside(original_point, px) {
-                        stack.push((x1 + 1, y1));
+                        stack.push((y1, x1 + 1));
                     }
                 }
-                if x1 - 1 < self.pixels.ncols() {
-                    px = self.pixels[(x1 - 1, y)];
+                if x1 - 1 < self.pixels.ncols() && y1 < self.pixels.nrows() {
+                    px = self.pixels[(y1, x1 - 1)];
                     if Self::inside(original_point, px) {
-                        stack.push((x1 - 1, y1));
+                        stack.push((y1, x1 - 1));
                     }
                 }
-                if y1 + 1 < self.pixels.nrows() {
-                    px = self.pixels[(x1, y + 1)];
+                if x1 < self.pixels.ncols() && y1 + 1 < self.pixels.nrows() {
+                    px = self.pixels[(y1 + 1, x1)];
                     if Self::inside(original_point, px) {
-                        stack.push((x1, y1 + 1));
+                        stack.push((y1 + 1, x1));
                     }
                 }
-                if y1 - 1 < self.pixels.nrows() {
-                    px = self.pixels[(x1, y - 1)];
+                if x1 < self.pixels.ncols() && y1 - 1 < self.pixels.nrows() {
+                    px = self.pixels[(y1 - 1, x1)];
                     if Self::inside(original_point, px) {
-                        stack.push((x1, y1 - 1));
+                        stack.push((y1 - 1, x1));
                     }
                 }
             }
