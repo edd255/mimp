@@ -1,7 +1,7 @@
 pub mod pixel {
     use num_traits::Zero;
 
-    #[derive(Clone, PartialEq, Debug)]
+    #[derive(Clone, Copy, PartialEq, Debug)]
     pub struct Pixel {
         pub red: u8,
         pub green: u8,

@@ -131,8 +131,8 @@ pub mod image {
                 .expect("Could not write height and width.");
             writeln!(file, "{}", self.scale).expect("Could not write scale");
             let mut buffer = String::new();
-            for x in 0..self.pixels.nrows() {
-                for y in 0..self.pixels.ncols() {
+            for y in 0..self.pixels.nrows() {
+                for x in 0..self.pixels.ncols() {
                     let pixel = &self.pixels[(y, x)];
                     let red = pixel.red;
                     let green = pixel.green;
@@ -232,6 +232,10 @@ pub mod image {
         ///
         /// # Parameters:
         ///   `filename` - path to the file (as String)
+        ///   `x1` - lower vertical border
+        ///   `x2` - upper vertical border
+        ///   `y1` - left horizontal border
+        ///   `y2` - right horizontal border
         pub fn crop(&self, filename: &String, x1: usize, x2: usize, y1: usize, y2: usize) {
             assert!(x1 <= self.pixels.ncols());
             assert!(x2 <= self.pixels.ncols());
@@ -360,6 +364,75 @@ pub mod image {
             file.write_all(buffer.as_bytes())
                 .expect("Could not write buffer to file");
             buffer.clear();
+        }
+
+        /// Landfill using a color and a point
+        ///
+        /// # Parameters:
+        ///   `filename` - path to the file (as String)
+        ///   `x` - x coordinate
+        ///   `y` - y coordinate
+        ///   `red` - red pixel value
+        ///   `green` - green pixel value
+        ///   `blue` - blue pixel value
+        pub fn landfill(
+            &mut self,
+            filename: &String,
+            x: usize,
+            y: usize,
+            red: u8,
+            green: u8,
+            blue: u8,
+        ) {
+            if x >= self.pixels.ncols() && y >= self.pixels.nrows() {
+                return;
+            }
+            let original_point = (
+                self.pixels[(x, y)].red,
+                self.pixels[(x, y)].green,
+                self.pixels[(x, y)].blue,
+            );
+            let mut stack: Vec<(usize, usize)> = vec![];
+            stack.push((x, y));
+            while !stack.is_empty() {
+                let Some((x1, y1)) = stack.pop() else {
+                    break;
+                };
+                let mut px = self.pixels[(x1, y1)];
+                if Self::inside(original_point, px) {
+                    self.pixels[(x1, y1)].red = red;
+                    self.pixels[(x1, y1)].green = green;
+                    self.pixels[(x1, y1)].blue = blue;
+                }
+                if x1 + 1 < self.pixels.ncols() {
+                    px = self.pixels[(x1 + 1, y)];
+                    if Self::inside(original_point, px) {
+                        stack.push((x1 + 1, y1));
+                    }
+                }
+                if x1 - 1 < self.pixels.ncols() {
+                    px = self.pixels[(x1 - 1, y)];
+                    if Self::inside(original_point, px) {
+                        stack.push((x1 - 1, y1));
+                    }
+                }
+                if y1 + 1 < self.pixels.nrows() {
+                    px = self.pixels[(x1, y + 1)];
+                    if Self::inside(original_point, px) {
+                        stack.push((x1, y1 + 1));
+                    }
+                }
+                if y1 - 1 < self.pixels.nrows() {
+                    px = self.pixels[(x1, y - 1)];
+                    if Self::inside(original_point, px) {
+                        stack.push((x1, y1 - 1));
+                    }
+                }
+            }
+            self.write(filename);
+        }
+        fn inside(rgb: (u8, u8, u8), new_point: Pixel) -> bool {
+            rgb.0 == new_point.red && rgb.1 == new_point.green && rgb.2 == new_point.blue
         }
     }
 }
