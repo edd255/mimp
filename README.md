@@ -1,7 +1,11 @@
 # Minimal Image Manipulation Program
-At university, I implemented seam carving in C for a lecture.
-Now I plan to reimplement the project in Rust, and add more image processing methods to familiarize myself with the language.
-
-Currently, some basic features as rotating, cropping, inverting colors are implemented, as well as a bit more advanced feature of seam carving.
-The repository is now in maintenance mode.
-No new features are added until the existing code is sufficiently tested and documented.
+At university, I have implemented the seam carving algorithm in C as a project for a programming lecture. 
+To familiarize myself with Rust, I've reimplemented the algorithm, and added more image processing methods. 
+The projects supports the following manipulations:
+* Rotating
+* Cropping
+* Inverting
+* Transposing
+* Mirroring
+* Seam Carving (vertically and horizontally)
+* Landfilling
