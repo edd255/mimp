@@ -135,7 +135,7 @@ fn main() {
     }
 }
 
-/// Write a random image to a file called `output`. This method will be replaced by proper testing.
+/// Write a random image to a file called `output`.
 ///
 /// # Parameters:
 ///   * `output` - A path to the output file

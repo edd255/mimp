@@ -25,10 +25,10 @@ pub mod image {
         /// Returns an image struct, parsed from a file
         ///
         /// # Parameters:
-        ///   `file` - The location of the file, as a String
+        ///  `file` - The location of the file, as a String
         ///
         /// # Returns:
-        ///   `Image` - Representation of the image file with the struct Image
+        ///  `Image` - Representation of the image file with the struct Image
         pub fn read(file: &String) -> Image {
             let contents = match fs::read_to_string(file) {
                 Ok(str) => str,
@@ -57,10 +57,10 @@ pub mod image {
         /// Parse the header of a PPM image file.
         ///
         /// # Parameters:
-        ///   `lines` - The lines to parse
+        ///  `lines` - The lines to parse
         ///
         /// # Returns:
-        ///   `Option<(String, usize, usize, u8)>` - Parse the magic number and the dimensions of the file.
+        ///  `Option<(String, usize, usize, u8)>` - Parse the magic number and the dimensions of the file.
         fn parse_header(lines: &[&str]) -> Option<(String, usize, usize, u8)> {
             let magic_number = lines.first().unwrap();
             let dimensions: Vec<&str> = match lines.get(1) {
@@ -79,10 +79,10 @@ pub mod image {
         /// Parse the pixels of the PPM image file.
         ///
         /// # Parameters:
-        ///   lines - The lines to parse
+        ///  lines - The lines to parse
         ///
         /// # Returns:
-        ///   `Option<Vec<Pixel>>`-  Returns an Optional of a pixel matrix, saved as vector
+        ///  `Option<Vec<Pixel>>`-  Returns an Optional of a pixel matrix, saved as vector
         fn parse_pixels(
             lines: &[&str],
             width: usize,
@@ -123,7 +123,7 @@ pub mod image {
         /// Write an image to a file.
         ///
         /// # Parameters:
-        ///   `filename` - path to the file
+        ///  `filename` - path to the file
         pub fn write(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -152,7 +152,7 @@ pub mod image {
         /// by three.
         ///
         /// # Returns:
-        ///   `u32`-  Brightness of the image
+        ///  `u32`-  Brightness of the image
         fn brightness(&self) -> u32 {
             let size: u32 = (self.pixels.nrows() * self.pixels.ncols())
                 .try_into()
@@ -174,6 +174,17 @@ pub mod image {
 
         //=== SEAM CARVING ========================================================================
 
+        /// Seam carves an image using the following procedure:
+        ///     * Calculate the appropriate energy matrix.
+        ///     * Find the pixel with the minimal energy at the width/height up to which the energy
+        ///     is calculated to.
+        ///     * Calculate the seam.
+        ///     * Carve the seam.
+        ///
+        /// # Parameters
+        ///  `iterations` - how many seams should be removed
+        ///  `output` - where the output image should be stored
+        ///  `vertical` - whether vertical or horizontal seams should be removed
         pub fn seam_carve(&mut self, iterations: usize, output: &String, vertical: bool) {
             if vertical {
                 let width = self.pixels.ncols();
@@ -204,6 +215,11 @@ pub mod image {
             }
         }
 
+        /// Carves a vertical path.
+        ///
+        /// # Parameters
+        ///  `border` - the width up to which the energy matrix is calculated to
+        ///  `seam` - the seam to carve
         fn carve_vertical_path(&mut self, border: usize, seam: &[usize]) {
             for j in 0..self.pixels.nrows() {
                 let col = *seam.get(j).unwrap();
@@ -215,6 +231,11 @@ pub mod image {
             }
         }
 
+        /// Carves a horizontal path.
+        ///
+        /// # Parameters
+        ///  `border` - the height up to which the energy matrix is calculated to
+        ///  `seam` - the seam to carve
         fn carve_horizontal_path(&mut self, border: usize, seam: &[usize]) {
             for j in 0..self.pixels.ncols() {
                 let row = *seam.get(j).unwrap();
@@ -231,11 +252,11 @@ pub mod image {
         /// Crop an image
         ///
         /// # Parameters:
-        ///   `filename` - path to the file (as String)
-        ///   `x1` - lower vertical border
-        ///   `x2` - upper vertical border
-        ///   `y1` - left horizontal border
-        ///   `y2` - right horizontal border
+        ///  `filename` - path to the file (as String)
+        ///  `x1` - lower vertical border
+        ///  `x2` - upper vertical border
+        ///  `y1` - left horizontal border
+        ///  `y2` - right horizontal border
         pub fn crop(&self, filename: &String, x1: usize, x2: usize, y1: usize, y2: usize) {
             assert!(x1 <= self.pixels.ncols());
             assert!(x2 <= self.pixels.ncols());
@@ -264,7 +285,7 @@ pub mod image {
         /// Transposes an image.
         ///
         /// Parameters:
-        ///   `filename` - Path to the file
+        ///  `filename` - Path to the file
         pub fn transpose(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -290,7 +311,7 @@ pub mod image {
         /// Rotates an image.
         ///
         /// Parameters:
-        ///   `filename` - Path to the file
+        ///  `filename` - Path to the file
         pub fn rotate(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -316,7 +337,7 @@ pub mod image {
         /// Rotate an image.
         ///
         /// # Parameters:
-        ///   `filename` - Path to the output file
+        ///  `filename` - Path to the output file
         pub fn invert(&mut self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number");
@@ -343,7 +364,7 @@ pub mod image {
         /// Mirror an image
         ///
         /// # Parameters:
-        ///   `filename` - path to the file (as String)
+        ///  `filename` - path to the file (as String)
         pub fn mirror(&self, filename: &String) {
             let mut file = fs::File::create(filename).expect("Could not write to file");
             writeln!(file, "{}", self.magic_number).expect("Could not write magic number.");
@@ -369,12 +390,9 @@ pub mod image {
         /// Landfill using a color and a point
         ///
         /// # Parameters:
-        ///   `filename` - path to the file (as String)
-        ///   `x` - x coordinate
-        ///   `y` - y coordinate
-        ///   `red` - red pixel value
-        ///   `green` - green pixel value
-        ///   `blue` - blue pixel value
+        ///  `filename` - path to the file (as String)
+        ///  `coords` - x and y coordinaates
+        ///  `rgb` - red, green and blue pixel values
         pub fn landfill(&mut self, filename: &String, coords: (usize, usize), rgb: (u8, u8, u8)) {
             env_logger::init();
             let (y, x) = coords;
@@ -427,8 +445,16 @@ pub mod image {
             self.write(filename);
         }
 
-        fn inside(rgb: (u8, u8, u8), new_point: Pixel) -> bool {
-            rgb.0 == new_point.red && rgb.1 == new_point.green && rgb.2 == new_point.blue
+        /// Checks whether the pixel has the required colors.
+        ///
+        /// # Parameters
+        ///  `rgb` - red, green and blue pixel values
+        ///  `pixel` - the pixel to inspect
+        ///
+        /// # Returns
+        ///  true if the pixel has the required colors
+        fn inside(rgb: (u8, u8, u8), pixel: Pixel) -> bool {
+            rgb.0 == pixel.red && rgb.1 == pixel.green && rgb.2 == pixel.blue
         }
     }
 }

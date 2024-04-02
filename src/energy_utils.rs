@@ -8,6 +8,14 @@ pub mod energy {
     use nalgebra::DMatrix;
     use std::cmp::min;
 
+    /// Pixels have local energy which is the sum of the color differences of the current pixel and
+    /// its left and upper neighbor (if present). The total energy of a pixel is calculated by
+    /// adding the minimum of the total energy of the three pixels above the current pixels.
+    ///
+    /// # Parameters
+    ///  `image` - the pixel matrix
+    ///  `energy` - the allocated energy matrix
+    ///  `border` - the width up to which column in the image the energy should be calculated
     pub fn calculate_vertical_energy_matrix(
         image: &Image,
         energy: &mut DMatrix<u32>,
@@ -59,6 +67,14 @@ pub mod energy {
         }
     }
 
+    /// Pixels have local energy which is the sum of the color differences of the current pixel and
+    /// its left and lower neighbor (if present). The total energy of a pixel is calculated by
+    /// adding the minimum of the total energy of the three pixels left to the current pixel.
+    ///
+    /// # Parameters
+    ///  `image` - the pixel matrix
+    ///  `energy` - the allocated energy matrix
+    ///  `border` - the height up to which row in the image the energy should be calculated
     pub fn calculate_horizontal_energy_matrix(
         image: &Image,
         energy: &mut DMatrix<u32>,
@@ -73,20 +89,20 @@ pub mod energy {
             let left = (j - 1, 0);
             energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left]);
         }
-        // Edge Case: Left Border
+        // Edge Case: First Row
         for i in 1..image.pixels.ncols() {
             let current = (0, i);
-            let above = (0, i - 1);
-            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[above]);
+            let lower = (0, i - 1);
+            energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[lower]);
         }
         // No Edge Cases
         for i in 1..image.pixels.ncols() {
             for j in 1..border {
                 let current = (j, i);
                 let left = (j - 1, i);
-                let above = (j, i - 1);
+                let lower = (j, i - 1);
                 energy[current] = Pixel::color_diff(image.pixels[current], image.pixels[left])
-                    + Pixel::color_diff(image.pixels[current], image.pixels[above]);
+                    + Pixel::color_diff(image.pixels[current], image.pixels[lower]);
             }
         }
         // Calculation of total energy
@@ -94,22 +110,23 @@ pub mod energy {
             for j in 0..border {
                 let current = (j, i);
                 let left = (j - 1, i - 1);
-                let above = (j, i - 1);
+                let lower = (j, i - 1);
                 let right = (j + 1, i - 1);
                 if j == 0 {
                     // Edge Case: Left Border
-                    energy[current] += min(energy[above], energy[right]);
+                    energy[current] += min(energy[lower], energy[right]);
                 } else if j == border - 1 {
                     // Edge Case: Right Border
-                    energy[current] += min(energy[above], energy[left]);
+                    energy[current] += min(energy[lower], energy[left]);
                 } else {
                     // No Edge Cases
-                    energy[current] += min(min(energy[above], energy[left]), energy[right]);
+                    energy[current] += min(min(energy[lower], energy[left]), energy[right]);
                 }
             }
         }
     }
 
+    /// Finds the column at the row `border` with the smallest energy.
     pub fn calculate_min_energy_column(energy: &DMatrix<u32>, border: usize) -> usize {
         let mut column: usize = 0;
         for i in 1..border {
@@ -120,6 +137,7 @@ pub mod energy {
         column
     }
 
+    /// Finds the row at the column `border` with the smallest energy.
     pub fn calculate_min_energy_row(energy: &DMatrix<u32>, border: usize) -> usize {
         let mut row: usize = 0;
         for i in 1..border {
@@ -130,6 +148,19 @@ pub mod energy {
         row
     }
 
+    /// The optimal seam is a pixel path with minimal total energy. The pixel in the bottom most
+    /// row with the minimal total energy is the start pixel. If there are multiple optimal
+    /// neighbors with distinct positions in the last row, the neighbor with the lowest x-coordinate
+    /// is used. If a pixel has multiple optimal neighbors, the top center neighbor, and then the
+    /// top left neighbor is preferred.
+    ///
+    /// # Parameters
+    ///  `energy` - the allocated energy matrix
+    ///  `border` - the width up to which column in the image the energy should be calculated
+    ///  `start` - the pixel with the minimal energy
+    ///
+    /// # Return
+    ///  the vertical seam
     pub fn calculate_optimal_vertical_path(
         energy: &DMatrix<u32>,
         border: usize,
@@ -182,6 +213,19 @@ pub mod energy {
         seam
     }
 
+    /// The optimal seam is a pixel path with minimal total energy. The pixel in the rightmost
+    /// column with the minimal total energy is the start pixel. If there are multiple optimal
+    /// neighbors with distinct positions in the last column, the neighbor with the lowest y-coordinate
+    /// is used. If a pixel has multiple optimal neighbors, the left center neighbor, and then the
+    /// top left neighbor is preferred.
+    ///
+    /// # Parameters
+    ///  `energy` - the allocated energy matrix
+    ///  `border` - the height up to which row in the image the energy should be calculated
+    ///  'start' - the pixel with the minimal energy
+    ///
+    /// # Return
+    ///  the horizontal seam
     pub fn calculate_optimal_horizontal_path(
         energy: &DMatrix<u32>,
         border: usize,
