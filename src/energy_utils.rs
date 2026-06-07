@@ -1,6 +1,6 @@
-/// Seam Carving uses color differences of neighboring pixels as dispensability score. This
-/// difference is called energy. This crate contains methods to calculate the energy of an image
-/// and to find the optimal path according to this dispensability score.
+//! Seam Carving uses color differences of neighboring pixels as dispensability score. This
+//! difference is called energy. This crate contains methods to calculate the energy of an image
+//! and to find the optimal path according to this dispensability score.
 
 pub mod energy {
     use crate::image_utils::image::Image;
