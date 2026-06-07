@@ -397,7 +397,7 @@ pub mod image {
             env_logger::init();
             let (y, x) = coords;
             let (red, green, blue) = rgb;
-            if x >= self.pixels.ncols() && y >= self.pixels.nrows() {
+            if x >= self.pixels.ncols() || y >= self.pixels.nrows() {
                 return;
             }
             let original_point = (
