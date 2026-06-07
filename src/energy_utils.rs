@@ -50,19 +50,14 @@ pub mod energy {
         for i in 1..image.pixels.nrows() {
             for j in 0..border {
                 let current = (i, j);
-                let left = (i - 1, j - 1);
-                let above = (i - 1, j);
-                let right = (i - 1, j + 1);
-                if j == 0 {
-                    // Edge Case: Left Border
-                    energy[current] += min(energy[above], energy[right]);
-                } else if j == border - 1 {
-                    // Edge Case: Right Border
-                    energy[current] += min(energy[above], energy[left]);
-                } else {
-                    // No Edge Cases
-                    energy[current] += min(min(energy[above], energy[left]), energy[right]);
+                let mut minimum = energy[(i - 1, j)];
+                if j > 0 {
+                    minimum = min(minimum, energy[(i - 1, j - 1)]);
                 }
+                if j + 1 < border {
+                    minimum = min(minimum, energy[(i - 1, j + 1)]);
+                }
+                energy[current] += minimum;
             }
         }
     }
@@ -109,19 +104,14 @@ pub mod energy {
         for i in 1..image.pixels.ncols() {
             for j in 0..border {
                 let current = (j, i);
-                let left = (j - 1, i - 1);
-                let lower = (j, i - 1);
-                let right = (j + 1, i - 1);
-                if j == 0 {
-                    // Edge Case: Left Border
-                    energy[current] += min(energy[lower], energy[right]);
-                } else if j == border - 1 {
-                    // Edge Case: Right Border
-                    energy[current] += min(energy[lower], energy[left]);
-                } else {
-                    // No Edge Cases
-                    energy[current] += min(min(energy[lower], energy[left]), energy[right]);
+                let mut minimum = energy[(j, i - 1)];
+                if j > 0 {
+                    minimum = min(minimum, energy[(j - 1, i - 1)]);
                 }
+                if j + 1 < border {
+                    minimum = min(minimum, energy[(j + 1, i - 1)]);
+                }
+                energy[current] += minimum;
             }
         }
     }
@@ -169,46 +159,16 @@ pub mod energy {
         let mut seam = vec![0; energy.nrows()];
         seam[energy.nrows() - 1] = start;
         for j in (1..energy.nrows()).rev() {
-            let left = (j - 1, seam[j] - 1);
-            let above = (j - 1, seam[j]);
-            let right = (j - 1, seam[j] + 1);
-            if seam[j] == 0 {
-                // Case: Left border
-                if energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
-            } else if seam[j] == border - 1 {
-                // Case: Right Border
-                if energy[above] <= energy[left] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] - 1;
-                }
-            } else if energy[above] == energy[left] {
-                // Precedence for multiple optimal pixels
-                if energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
-            } else if energy[above] <= energy[right] {
-                if energy[above] <= energy[left] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] - 1;
-                }
-            } else {
-                // Remainder
-                if energy[left] < energy[above] && energy[left] <= energy[right] {
-                    seam[j - 1] = seam[j] - 1;
-                } else if energy[above] < energy[left] && energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
+            let mut best = seam[j];
+            let mut minimum = energy[(j - 1, best)];
+            if seam[j] > 0 && energy[(j - 1, seam[j] - 1)] < minimum {
+                best = seam[j] - 1;
+                minimum = energy[(j - 1, best)];
             }
+            if seam[j] + 1 < border && energy[(j - 1, seam[j] + 1)] < minimum {
+                best = seam[j] + 1;
+            }
+            seam[j - 1] = best;
         }
         seam
     }
@@ -234,47 +194,77 @@ pub mod energy {
         let mut seam = vec![0; energy.ncols()];
         seam[energy.ncols() - 1] = start;
         for j in (1..energy.ncols()).rev() {
-            let left = (seam[j] - 1, j - 1);
-            let above = (seam[j], j - 1);
-            let right = (seam[j] + 1, j - 1);
-            if seam[j] == 0 {
-                // Case: Left border
-                if energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
-            } else if seam[j] == border - 1 {
-                // Case: Right Border
-                if energy[above] <= energy[left] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] - 1;
-                }
-            } else if energy[above] == energy[left] {
-                // Precedence for multiple optimal pixels
-                if energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
-            } else if energy[above] <= energy[right] {
-                if energy[above] <= energy[left] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] - 1;
-                }
-            } else {
-                // Remainder
-                if energy[left] < energy[above] && energy[left] <= energy[right] {
-                    seam[j - 1] = seam[j] - 1;
-                } else if energy[above] < energy[left] && energy[above] <= energy[right] {
-                    seam[j - 1] = seam[j];
-                } else {
-                    seam[j - 1] = seam[j] + 1;
-                }
+            let mut best = seam[j];
+            let mut minimum = energy[(best, j - 1)];
+            if seam[j] > 0 && energy[(seam[j] - 1, j - 1)] < minimum {
+                best = seam[j] - 1;
+                minimum = energy[(best, j - 1)];
             }
+            if seam[j] + 1 < border && energy[(seam[j] + 1, j - 1)] < minimum {
+                best = seam[j] + 1;
+            }
+            seam[j - 1] = best;
         }
         seam
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use crate::pixel_utils::pixel::Pixel;
+
+        fn image(width: usize, height: usize) -> Image {
+            Image {
+                magic_number: "P3".to_string(),
+                scale: 255,
+                pixels: DMatrix::from_element(
+                    height,
+                    width,
+                    Pixel {
+                        red: 10,
+                        green: 20,
+                        blue: 30,
+                    },
+                ),
+            }
+        }
+
+        #[test]
+        fn vertical_energy_handles_left_border_without_underflow() {
+            let image = image(3, 3);
+            let mut energy = DMatrix::from_element(3, 3, 0);
+
+            calculate_vertical_energy_matrix(&image, &mut energy, 3);
+
+            assert_eq!(energy[(2, 0)], 0);
+        }
+
+        #[test]
+        fn horizontal_energy_handles_top_border_without_underflow() {
+            let image = image(3, 3);
+            let mut energy = DMatrix::from_element(3, 3, 0);
+
+            calculate_horizontal_energy_matrix(&image, &mut energy, 3);
+
+            assert_eq!(energy[(0, 2)], 0);
+        }
+
+        #[test]
+        fn vertical_path_handles_left_border_without_underflow() {
+            let energy = DMatrix::from_element(3, 3, 1);
+
+            let seam = calculate_optimal_vertical_path(&energy, 3, 0);
+
+            assert_eq!(seam, vec![0, 0, 0]);
+        }
+
+        #[test]
+        fn horizontal_path_handles_top_border_without_underflow() {
+            let energy = DMatrix::from_element(3, 3, 1);
+
+            let seam = calculate_optimal_horizontal_path(&energy, 3, 0);
+
+            assert_eq!(seam, vec![0, 0, 0]);
+        }
     }
 }
